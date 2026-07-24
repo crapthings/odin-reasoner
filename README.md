@@ -115,6 +115,8 @@ docs/               architecture and GitHub Pages source
   exclusions.
 - [OWL profile](reasoner/owlrl/profile.md) — static and list-dependent rules,
   limits, and consistency-report semantics.
+- [OWL profile decision](docs/owl-profiles.md) — why this project chooses a
+  bounded RL seed, and the entry criteria for EL, QL/OBDA, DL, or Full work.
 - [Roadmap](ROADMAP.md) — staged implementation scope.
 - [Benchmarks](benchmarks/README.md) — baseline and methodology.
 

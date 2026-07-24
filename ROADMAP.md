@@ -57,6 +57,9 @@ expanding OWL scope.
 
 ## Deliberately deferred
 
-Additional OWL 2 RL rule clusters, RIF, named graphs, persistent stores,
-transactions, SPARQL Update, protocol/HTTP, and extracting a shared graph-store
-repository remain out of scope until their dedicated milestones.
+Additional OWL 2 RL rule clusters, a dedicated OWL 2 EL classifier, OWL 2 QL
+query rewriting/OBDA, DL or Full reasoning, RIF, named graphs, persistent
+stores, transactions, SPARQL Update, protocol/HTTP, and extracting a shared
+graph-store repository remain out of scope until their dedicated milestones.
+See [the OWL profile decision](docs/owl-profiles.md) for the workload and
+architecture criteria required to open an EL or QL milestone.
