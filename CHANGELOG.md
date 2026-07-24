@@ -5,6 +5,8 @@ new capabilities may require a minor version and callers should pin releases.
 
 ## Unreleased
 
+## 0.2.0 - 2026-07-24
+
 - Add `adapter/sparql.indexed_view`, a borrowed default-graph SPARQL View over
   a caller-kept reasoner Store. It reuses store-owned terms and indexed match
   scans without replacing the independent immutable `Snapshot` contract.
