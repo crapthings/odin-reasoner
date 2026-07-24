@@ -88,6 +88,7 @@ OWL_ALL_DISJOINT_CLASSES  :: "http://www.w3.org/2002/07/owl#AllDisjointClasses"
 OWL_ALL_DISJOINT_PROPERTIES :: "http://www.w3.org/2002/07/owl#AllDisjointProperties"
 OWL_ALL_DIFFERENT         :: "http://www.w3.org/2002/07/owl#AllDifferent"
 OWL_MEMBERS               :: "http://www.w3.org/2002/07/owl#members"
+OWL_DISTINCT_MEMBERS      :: "http://www.w3.org/2002/07/owl#distinctMembers"
 OWL_NEGATIVE_PROPERTY_ASSERTION :: "http://www.w3.org/2002/07/owl#NegativePropertyAssertion"
 OWL_SOURCE_INDIVIDUAL     :: "http://www.w3.org/2002/07/owl#sourceIndividual"
 OWL_ASSERTION_PROPERTY    :: "http://www.w3.org/2002/07/owl#assertionProperty"
@@ -140,6 +141,7 @@ Terms :: struct {
 	all_disjoint_properties: term.Term_ID,
 	all_different:         term.Term_ID,
 	members:              term.Term_ID,
+	distinct_members:     term.Term_ID,
 	negative_property_assertion: term.Term_ID,
 	source_individual:    term.Term_ID,
 	assertion_property:   term.Term_ID,
@@ -250,7 +252,7 @@ Profile :: struct {
 // initializing the composed RDFS profile. This prevents a term-limit error
 // from leaving a partially admitted OWL RL vocabulary batch.
 init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Error_Code) {
-	values := [47]rdf.Term{
+	values := [48]rdf.Term{
 		rdf.iri(rdfs.RDF_TYPE), rdf.iri(rdfs.RDFS_SUBCLASS), rdf.iri(rdfs.RDFS_SUBPROPERTY),
 		rdf.iri(rdfs.RDFS_DOMAIN_IRI), rdf.iri(rdfs.RDFS_RANGE_IRI),
 		rdf.iri(OWL_EQUIVALENT_CLASS), rdf.iri(OWL_EQUIVALENT_PROPERTY), rdf.iri(OWL_INVERSE_OF),
@@ -275,8 +277,9 @@ init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Erro
 		rdf.iri(OWL_OBJECT_PROPERTY),
 		rdf.iri(OWL_DATATYPE_PROPERTY),
 		rdf.iri(OWL_HAS_KEY),
+		rdf.iri(OWL_DISTINCT_MEMBERS),
 	}
-	ids: [47]term.Term_ID
+	ids: [48]term.Term_ID
 	if store_error := store.intern_terms(target, values[:], ids[:]); store_error != .None do return .Store_Error, store_error
 	rdfs_error, nested_store_error := rdfs.init(&profile.rdfs, target)
 	if rdfs_error != .None do return .RDFS_Error, nested_store_error
@@ -328,6 +331,7 @@ init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Erro
 		object_property = ids[44],
 		datatype_property = ids[45],
 		has_key = ids[46],
+		distinct_members = ids[47],
 	}
 	base_rules := rdfs.rule_set(&profile.rdfs)
 	for index in 0..<len(base_rules) do profile.rules[index] = base_rules[index]

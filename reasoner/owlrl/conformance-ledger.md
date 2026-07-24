@@ -87,9 +87,11 @@ origin-only contract; `materialize_all` is the gate for dynamic provenance.
 ## Consistency and atomicity gates
 
 - `consistency_test:test_materialize_checked_reports_each_supported_false_rule`
-  covers implemented false directions: `eq-diff1`, class/property disjointness,
-  complements, all-disjoint classes/properties, negative assertions,
-  all-different, `owl:Nothing`, irreflexivity, and asymmetry.
+  covers implemented false directions: `eq-diff1`, `eq-diff2`
+  (`owl:members`) and `eq-diff3` (`owl:distinctMembers`) for
+  `owl:AllDifferent`, class/property disjointness, complements, all-disjoint
+  classes/properties, negative assertions, `owl:Nothing`, irreflexivity, and
+  asymmetry.
 - `materialize_all_checked_test:test_materialize_all_checked_reports_dynamic_list_contradictions_after_commit`
   proves a list-derived class fact participates in consistency analysis.
 - `materialize_all_checked_test:test_materialize_all_checked_keeps_dynamic_failure_transactional_and_clears_report`
@@ -104,7 +106,8 @@ origin-only contract; `materialize_all` is the gate for dynamic provenance.
 ## Deliberately unmapped OWL 2 RL directions
 
 Not implemented: `prp-key` / `owl:hasKey`; cardinality restrictions; datatype
-entailment and datatype false rules; RDF-list false rules; schema self-axioms outside the documented 141–148 seed; generalized
+entailment and datatype false rules; remaining RDF-list false rules
+(`cax-adc`, `prp-adp`); schema self-axioms outside the documented 141–148 seed; generalized
 RDF literal-subject equality; and every other W3C OWL 2 RL direction not listed
 above. A term being reserved in the vocabulary is not evidence that its rule is
 implemented.

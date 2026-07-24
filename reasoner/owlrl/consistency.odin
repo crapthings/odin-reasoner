@@ -349,6 +349,8 @@ check_consistency :: proc(profile: ^Profile, target: ^store.Store, report: ^Repo
 			} else if fact.object == profile.terms.all_different {
 				members_state := All_Different_Members_State{base = &state, group_type_fact_id = id}
 				_ = store.match(target, {subject = fact.subject, predicate = profile.terms.members}, all_different_members_sink, &members_state)
+				if state.error != .None do break
+				_ = store.match(target, {subject = fact.subject, predicate = profile.terms.distinct_members}, all_different_members_sink, &members_state)
 			} else if fact.object == profile.terms.negative_property_assertion {
 				check_negative_property_assertion(&state, id, fact.subject)
 			}

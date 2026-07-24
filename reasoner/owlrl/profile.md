@@ -60,7 +60,7 @@ and dynamic direction to local evidence and its strict-RDF/resource boundary.
 
 The RDFS and OWL rules are passed to one semi-naive materializer, so either
 cluster can drive the other to a single bounded fixpoint. `init` reserves all
-forty-seven RDFS/OWL vocabulary terms as one store batch before building rules.
+forty-eight RDFS/OWL vocabulary terms as one store batch before building rules.
 
 ## Complete supported closure
 

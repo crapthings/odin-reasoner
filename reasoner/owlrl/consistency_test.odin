@@ -20,6 +20,15 @@ import store "../store"
 	return false
 }
 
+@(private) count_kind :: proc(report: ^Report, wanted: Violation_Kind) -> int {
+	count := 0
+	for index in 0..<violation_count(report) {
+		violation, found := violation_at(report, index)
+		if found && violation.kind == wanted do count += 1
+	}
+	return count
+}
+
 @(test)
 test_materialize_checked_reports_each_supported_false_rule :: proc(t: ^testing.T) {
 	target: store.Store
@@ -85,6 +94,13 @@ test_materialize_checked_reports_each_supported_false_rule :: proc(t: ^testing.T
 	add_consistency_fact(t, &target, {dnode1, rdf.iri(RDF_REST), dnode2})
 	add_consistency_fact(t, &target, {dnode2, rdf.iri(RDF_FIRST), u})
 	add_consistency_fact(t, &target, {dnode2, rdf.iri(RDF_REST), rdf.iri(RDF_NIL)})
+	distinct_group, distinct_node1, distinct_node2 := rdf.blank_node("all-different-distinct", rdf.Blank_Node_Scope(20)), rdf.blank_node("all-different-distinct-1", rdf.Blank_Node_Scope(20)), rdf.blank_node("all-different-distinct-2", rdf.Blank_Node_Scope(20))
+	add_consistency_fact(t, &target, {distinct_group, type, rdf.iri(OWL_ALL_DIFFERENT)})
+	add_consistency_fact(t, &target, {distinct_group, rdf.iri(OWL_DISTINCT_MEMBERS), distinct_node1})
+	add_consistency_fact(t, &target, {distinct_node1, rdf.iri(RDF_FIRST), u})
+	add_consistency_fact(t, &target, {distinct_node1, rdf.iri(RDF_REST), distinct_node2})
+	add_consistency_fact(t, &target, {distinct_node2, rdf.iri(RDF_FIRST), u})
+	add_consistency_fact(t, &target, {distinct_node2, rdf.iri(RDF_REST), rdf.iri(RDF_NIL)})
 	add_consistency_fact(t, &target, {p1, rdf.iri(OWL_PROPERTY_DISJOINT_WITH), p2})
 	add_consistency_fact(t, &target, {s, p1, o})
 	add_consistency_fact(t, &target, {s, p2, o})
@@ -105,6 +121,7 @@ test_materialize_checked_reports_each_supported_false_rule :: proc(t: ^testing.T
 	testing.expect(t, has_kind(&report, .All_Disjoint_Properties))
 	testing.expect(t, has_kind(&report, .Negative_Property_Assertion))
 	testing.expect(t, has_kind(&report, .All_Different))
+	testing.expect_value(t, count_kind(&report, .All_Different), 2)
 	testing.expect(t, has_kind(&report, .Nothing_Instance))
 	testing.expect(t, has_kind(&report, .Disjoint_Properties))
 	testing.expect(t, has_kind(&report, .Irreflexive_Property))
