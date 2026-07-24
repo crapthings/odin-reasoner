@@ -126,47 +126,6 @@ RDFS_COMMENT              :: "http://www.w3.org/2000/01/rdf-schema#comment"
 RDFS_SEE_ALSO             :: "http://www.w3.org/2000/01/rdf-schema#seeAlso"
 RDFS_IS_DEFINED_BY        :: "http://www.w3.org/2000/01/rdf-schema#isDefinedBy"
 RDFS_DATATYPE             :: "http://www.w3.org/2000/01/rdf-schema#Datatype"
-RDF_PLAIN_LITERAL         :: "http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral"
-RDF_XML_LITERAL           :: "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral"
-
-// OWL_RL_DATATYPE_IRIS is the complete W3C OWL 2 RL supported datatype set.
-// It is deliberately a registry rather than a lexical-value implementation:
-// dt-type1 needs only these datatype resources, while dt-type2/dt-eq/dt-diff/
-// dt-not-type will consume the same list after value-space support is added.
-OWL_RL_DATATYPE_IRIS :: [32]string{
-	RDF_PLAIN_LITERAL,
-	RDF_XML_LITERAL,
-	"http://www.w3.org/2000/01/rdf-schema#Literal",
-	"http://www.w3.org/2001/XMLSchema#decimal",
-	"http://www.w3.org/2001/XMLSchema#integer",
-	"http://www.w3.org/2001/XMLSchema#nonNegativeInteger",
-	"http://www.w3.org/2001/XMLSchema#nonPositiveInteger",
-	"http://www.w3.org/2001/XMLSchema#positiveInteger",
-	"http://www.w3.org/2001/XMLSchema#negativeInteger",
-	"http://www.w3.org/2001/XMLSchema#long",
-	"http://www.w3.org/2001/XMLSchema#int",
-	"http://www.w3.org/2001/XMLSchema#short",
-	"http://www.w3.org/2001/XMLSchema#byte",
-	"http://www.w3.org/2001/XMLSchema#unsignedLong",
-	"http://www.w3.org/2001/XMLSchema#unsignedInt",
-	"http://www.w3.org/2001/XMLSchema#unsignedShort",
-	"http://www.w3.org/2001/XMLSchema#unsignedByte",
-	"http://www.w3.org/2001/XMLSchema#float",
-	"http://www.w3.org/2001/XMLSchema#double",
-	"http://www.w3.org/2001/XMLSchema#string",
-	"http://www.w3.org/2001/XMLSchema#normalizedString",
-	"http://www.w3.org/2001/XMLSchema#token",
-	"http://www.w3.org/2001/XMLSchema#language",
-	"http://www.w3.org/2001/XMLSchema#Name",
-	"http://www.w3.org/2001/XMLSchema#NCName",
-	"http://www.w3.org/2001/XMLSchema#NMTOKEN",
-	"http://www.w3.org/2001/XMLSchema#boolean",
-	"http://www.w3.org/2001/XMLSchema#hexBinary",
-	"http://www.w3.org/2001/XMLSchema#base64Binary",
-	"http://www.w3.org/2001/XMLSchema#anyURI",
-	"http://www.w3.org/2001/XMLSchema#dateTime",
-	"http://www.w3.org/2001/XMLSchema#dateTimeStamp",
-}
 
 Terms :: struct {
 	rdf_type:            term.Term_ID,
@@ -394,7 +353,7 @@ init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Erro
 	values: [96]rdf.Term
 	for value, value_index in base_values do values[value_index] = value
 	values[63] = rdf.iri(RDFS_DATATYPE)
-	for datatype_iri, datatype_index in OWL_RL_DATATYPE_IRIS do values[64 + datatype_index] = rdf.iri(datatype_iri)
+	for datatype_iri, datatype_index in rdf.OWL_RL_DATATYPE_IRIS do values[64 + datatype_index] = rdf.iri(datatype_iri)
 	ids: [96]term.Term_ID
 	if store_error := store.intern_terms(target, values[:], ids[:]); store_error != .None do return .Store_Error, store_error
 	rdfs_error, nested_store_error := rdfs.init(&profile.rdfs, target)
