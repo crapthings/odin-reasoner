@@ -47,7 +47,7 @@ flowchart LR
 | --- | --- | --- |
 | RDFS Core | Six rules: subclass, subproperty, domain, range, and transitivity | Not complete RDFS; no axiomatic triples or container rules |
 | Static OWL profile | 51 direct OWL 2 RL hierarchy, property, schema, value, equality, functional-property, self-restriction, and cardinality rules | A documented seed, not complete OWL 2 RL |
-| RDF-list materializers | `owl:oneOf`, `owl:intersectionOf`, `owl:unionOf`, and multi-property `owl:propertyChainAxiom` | Explicit list and path-frontier limits |
+| RDF-list materializers | `owl:oneOf`, `owl:intersectionOf`, `owl:unionOf`, `owl:hasKey`, and multi-property `owl:propertyChainAxiom` | Explicit list and path-frontier limits |
 | Consistency analysis | Evidence-carrying reports for implemented false rules | Reports inconsistency; does not discard a successful closure |
 | SPARQL integration | Optional copied or Store-adopting immutable default-graph Snapshot, plus borrowed indexed live View | No core dependency on `odin-sparql`; named graphs remain unsupported |
 
@@ -60,7 +60,7 @@ scenarios for cross-rule closure, checked conflicts, and transactional failures.
 
 Use `owlrl.materialize_all` when the application needs the whole supported OWL
 closure: it reaches one transactional fixpoint across the static profile and
-all four RDF-list families. The focused list entry points remain available for
+all five RDF-list families. The focused list entry points remain available for
 isolated use. Use `owlrl.materialize_all_checked` to scan that same completed
 closure for implemented OWL contradictions without retracting it.
 

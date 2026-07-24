@@ -69,11 +69,11 @@ fifty-three RDFS/OWL vocabulary terms as one store batch before building rules.
 
 `materialize_all` is the public entry point when an application needs every
 currently supported entailment family. It alternates the static fifty-seven-rule
-RDFS/OWL table with `owl:oneOf`, `owl:intersectionOf`, `owl:unionOf`, and
-`owl:propertyChainAxiom` expansion until a joint fixpoint. It uses one cloned
+RDFS/OWL table with `owl:oneOf`, `owl:intersectionOf`, `owl:unionOf`,
+`owl:propertyChainAxiom`, and `owl:hasKey` expansion until a joint fixpoint. It uses one cloned
 working store and commits inferred facts only after success: any static-rule,
 list, path-frontier, derivation, or outer-round error leaves the caller's store
-unchanged. Its `max_derivations` and `max_rounds` limits apply across all five
+unchanged. Its `max_derivations` and `max_rounds` limits apply across all six
 phases; `max_list_items` applies to every decoded collection, and
 `max_path_states` applies to each property-chain frontier.
 
@@ -84,6 +84,7 @@ phases; `max_list_items` applies to every decoded collection, and
 | `OWL-RL-CLS-INT2` (151) | Intersection instance → every member-class instance |
 | `OWL-RL-CLS-UNI` (152) | Member-class instance → enclosing union instance |
 | `OWL-RL-PRP-SPO2` (153) | Complete property-list path → declared chain property |
+| `OWL-RL-PRP-KEY` (157) | Matching every property in an `owl:hasKey` RDF list identifies two class instances |
 
 The focused `materialize`, `materialize_one_of`, `materialize_intersection`,
 `materialize_union`, and `materialize_property_chains` entry points remain for

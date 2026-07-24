@@ -61,8 +61,8 @@ Materialize_All_Result :: struct {
 }
 
 // materialize_all reaches one transactional fixpoint across the profile's
-// static RDFS/OWL rules and its supported oneOf, intersectionOf, unionOf, and
-// propertyChainAxiom phases. The existing focused materializers remain useful
+// static RDFS/OWL rules and its supported oneOf, intersectionOf, unionOf,
+// propertyChainAxiom, and hasKey phases. The existing focused materializers remain useful
 // for isolating one rule family; this is the complete supported closure entry
 // point. It also stages first-support closure provenance for static and list
 // facts; focused dynamic materializers retain their smaller origin-only API.
@@ -209,6 +209,26 @@ materialize_all :: proc(profile: ^Profile, target: ^store.Store, options: Materi
 		}
 		result.inferred_facts += chain_added
 		phase_added += chain_added
+
+		remaining = remaining_derivations(options.max_derivations, result.inferred_facts)
+		key_added, key_error, key_list_error, key_store_error := emit_has_keys(profile, &work, options.max_list_items, remaining, &staged_provenance)
+		if key_error != .None {
+			if key_error == .Rule_Error {
+				result.error = .Rule_Error
+				result.rule_error = .Max_Derivations
+			} else if key_error == .List_Error {
+				result.error = .List_Error
+				result.list_error = key_list_error
+			} else if key_error == .Out_Of_Memory {
+				result.error = .Out_Of_Memory
+			} else {
+				result.error = .Store_Error
+				result.store_error = key_store_error
+			}
+			return result
+		}
+		result.inferred_facts += key_added
+		phase_added += key_added
 
 		result.rounds += 1
 		if phase_added == 0 do break

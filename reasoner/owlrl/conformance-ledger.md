@@ -79,6 +79,7 @@ directions only; they do not claim OWL 1, OWL 2, or full OWL 2 RL conformance.
 | `cls-int2` / 151 | `intersection_test:test_intersection_list_rules_reach_joint_rdfs_fixpoint`; `materialize_all_test:test_materialize_all_reaches_one_fixpoint_across_every_supported_list_phase` | stable reverse-direction provenance |
 | `cls-uni` / 152 | `union_test:test_union_list_rule_reaches_joint_rdfs_fixpoint`; `materialize_all_test:test_materialize_all_reaches_one_fixpoint_across_every_supported_list_phase` | empty list has no finite conclusion |
 | `prp-spo2` / 153 | `property_chain_test:test_property_chain_materializes_exact_paths_and_reaches_rdfs_fixpoint`; `materialize_all_test:test_materialize_all_reaches_one_fixpoint_across_every_supported_list_phase` | two-or-more IRI properties and first path support |
+| `prp-key` / 157 | `has_key_test:test_materialize_all_has_key_matches_every_list_property`, `test_materialize_all_has_key_empty_list_matches_class_instances`, `test_materialize_all_has_key_malformed_list_is_transactional` | arbitrary well-formed (including empty) key lists, first-support evidence, and malformed-list rollback |
 
 `rdf_list_test` independently covers owned list decoding, empty lists, malformed
 nodes, cycles, item limits, and cleared partial output. `materialize_all_test`
@@ -109,8 +110,7 @@ origin-only contract; `materialize_all` is the gate for dynamic provenance.
 
 ## Deliberately unmapped OWL 2 RL directions
 
-Not implemented: `prp-key` / `owl:hasKey`; datatype entailment and
-datatype false rules; schema self-axioms outside the documented
+Not implemented: datatype entailment and datatype false rules; schema self-axioms outside the documented
 141–148 seed; generalized
 RDF literal-subject equality; and every other W3C OWL 2 RL direction not listed
 above. A term being reserved in the vocabulary is not evidence that its rule is

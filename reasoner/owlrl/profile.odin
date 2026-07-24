@@ -64,6 +64,7 @@ OWL_RL_PRP_SPO2          :: rule.Rule_ID(153)
 OWL_RL_CLS_MAXC2         :: rule.Rule_ID(154)
 OWL_RL_CLS_MAXQC3        :: rule.Rule_ID(155)
 OWL_RL_CLS_MAXQC4        :: rule.Rule_ID(156)
+OWL_RL_PRP_KEY           :: rule.Rule_ID(157)
 
 OWL_EQUIVALENT_CLASS    :: "http://www.w3.org/2002/07/owl#equivalentClass"
 OWL_EQUIVALENT_PROPERTY :: "http://www.w3.org/2002/07/owl#equivalentProperty"
