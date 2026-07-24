@@ -11,10 +11,10 @@ A bounded, forward-chaining RDF reasoner for Odin. It builds on
 a deliberately small RDFS Core profile, and adds an explicitly documented
 OWL 2 RL seed with first-support provenance and resource limits.
 
-**Current release: `0.3.0`** — adds a no-copy immutable SPARQL Snapshot that
-adopts a finished reasoner Store and preserves its indexes. The package remains
-pre-1.0; callers must pin a release and retain integration tests for their own
-facts and selected profiles.
+**Current development baseline** — adds a no-copy immutable SPARQL Snapshot
+that adopts a finished reasoner Store and preserves its indexes. The package is
+not publicly released yet; its W3C rule coverage and cross-repository
+integration are being strengthened before any release boundary is declared.
 
 `odin-reasoner` is for applications that need inspectable closure over
 application-owned facts—not a hidden triple store, network client, or a claim

@@ -104,8 +104,11 @@ origin-only contract; `materialize_all` is the gate for dynamic provenance.
 ## Deliberately unmapped OWL 2 RL directions
 
 Not implemented: `prp-key` / `owl:hasKey`; cardinality restrictions; datatype
-entailment and datatype false rules; RDF-list false rules; reflexive-property
-entailment; schema self-axioms outside the documented 141–148 seed; generalized
+entailment and datatype false rules; RDF-list false rules; schema self-axioms outside the documented 141–148 seed; generalized
 RDF literal-subject equality; and every other W3C OWL 2 RL direction not listed
 above. A term being reserved in the vocabulary is not evidence that its rule is
 implemented.
+
+`owl:ReflexiveProperty` is intentionally outside this ledger: the W3C OWL 2 RL
+grammar excludes `ReflexiveObjectProperty`, so reflexive-property entailment is
+not an OWL 2 RL target direction for this profile.
