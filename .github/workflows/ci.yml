@@ -20,14 +20,20 @@ jobs:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           repository: crapthings/odin-rdf
-          ref: daa350521a8ad9f79012bb1fefa96cf00938f3f1 # v0.31.1
+          ref: a4024ddec94fbdcd810631206752d87c5595120f # development convergence baseline
           path: _deps/odin-rdf
           persist-credentials: false
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           repository: crapthings/odin-sparql
-          ref: fcba9b6ffd542f246bf026d69dbd045624315c8d # v0.1.1
+          ref: 9a4725c9e2f87fb0eb1fda052fbc03153a709e0f # development convergence baseline
           path: _deps/odin-sparql
+          persist-credentials: false
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          repository: crapthings/odin-graph
+          ref: 446cd3d002d7c4b27ff5224d0e987b88a0f96f00 # development convergence baseline
+          path: _deps/odin-graph
           persist-credentials: false
       - uses: laytan/setup-odin@8536d8fa450ec6f1bd9ddc84bbaaf16296c0051d # v2.12.2
         with:
@@ -41,7 +47,7 @@ jobs:
       - run: odin test reasoner/rule -collection:odin-rdf=_deps/odin-rdf
       - run: odin test reasoner/rdfs -collection:odin-rdf=_deps/odin-rdf
       - run: odin test reasoner/owlrl -collection:odin-rdf=_deps/odin-rdf
-      - run: odin test adapter/sparql -collection:odin-rdf=_deps/odin-rdf -collection:odin-sparql=_deps/odin-sparql
+      - run: odin test adapter/sparql -collection:odin-rdf=_deps/odin-rdf -collection:odin-graph=_deps/odin-graph -collection:odin-sparql=_deps/odin-sparql
 
   quality:
     runs-on: ubuntu-latest
@@ -51,14 +57,20 @@ jobs:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           repository: crapthings/odin-rdf
-          ref: daa350521a8ad9f79012bb1fefa96cf00938f3f1 # v0.31.1
+          ref: a4024ddec94fbdcd810631206752d87c5595120f # development convergence baseline
           path: _deps/odin-rdf
           persist-credentials: false
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           repository: crapthings/odin-sparql
-          ref: fcba9b6ffd542f246bf026d69dbd045624315c8d # v0.1.1
+          ref: 9a4725c9e2f87fb0eb1fda052fbc03153a709e0f # development convergence baseline
           path: _deps/odin-sparql
+          persist-credentials: false
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          repository: crapthings/odin-graph
+          ref: 446cd3d002d7c4b27ff5224d0e987b88a0f96f00 # development convergence baseline
+          path: _deps/odin-graph
           persist-credentials: false
       - uses: laytan/setup-odin@8536d8fa450ec6f1bd9ddc84bbaaf16296c0051d # v2.12.2
         with:
@@ -71,7 +83,7 @@ jobs:
       - run: odin check reasoner/rule -no-entry-point -vet -warnings-as-errors -collection:odin-rdf=_deps/odin-rdf
       - run: odin check reasoner/rdfs -no-entry-point -vet -warnings-as-errors -collection:odin-rdf=_deps/odin-rdf
       - run: odin check reasoner/owlrl -no-entry-point -vet -warnings-as-errors -collection:odin-rdf=_deps/odin-rdf
-      - run: odin check adapter/sparql -no-entry-point -vet -warnings-as-errors -collection:odin-rdf=_deps/odin-rdf -collection:odin-sparql=_deps/odin-sparql
+      - run: odin check adapter/sparql -no-entry-point -vet -warnings-as-errors -collection:odin-rdf=_deps/odin-rdf -collection:odin-graph=_deps/odin-graph -collection:odin-sparql=_deps/odin-sparql
       - run: odin test reasoner -sanitize:address -collection:odin-rdf=_deps/odin-rdf
       - run: odin test reasoner/term -sanitize:address -collection:odin-rdf=_deps/odin-rdf
       - run: odin test reasoner/store -sanitize:address -collection:odin-rdf=_deps/odin-rdf
@@ -79,4 +91,4 @@ jobs:
       - run: odin test reasoner/rule -sanitize:address -collection:odin-rdf=_deps/odin-rdf
       - run: odin test reasoner/rdfs -sanitize:address -collection:odin-rdf=_deps/odin-rdf
       - run: odin test reasoner/owlrl -sanitize:address -collection:odin-rdf=_deps/odin-rdf
-      - run: odin test adapter/sparql -sanitize:address -collection:odin-rdf=_deps/odin-rdf -collection:odin-sparql=_deps/odin-sparql
+      - run: odin test adapter/sparql -sanitize:address -collection:odin-rdf=_deps/odin-rdf -collection:odin-graph=_deps/odin-graph -collection:odin-sparql=_deps/odin-sparql
