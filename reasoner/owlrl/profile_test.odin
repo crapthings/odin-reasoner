@@ -172,6 +172,27 @@ test_reversing_property_rules_skip_literal_subject_heads :: proc(t: ^testing.T) 
 }
 
 @(test)
+test_generalized_materialization_retains_literal_subject_heads :: proc(t: ^testing.T) {
+	target: store.Store
+	testing.expect_value(t, store.init(&target), store.Error_Code.None)
+	defer store.destroy(&target)
+	profile: Profile
+	profile_error, store_error := init(&profile, &target)
+	testing.expect_value(t, profile_error, Error_Code.None)
+	testing.expect_value(t, store_error, store.Error_Code.None)
+	defer destroy(&profile)
+
+	p1, p2 := rdf.iri("urn:p1"), rdf.iri("urn:p2")
+	source, literal := rdf.iri("urn:source"), rdf.literal("literal object")
+	add(t, &target, {p1, rdf.iri(OWL_INVERSE_OF), p2})
+	add(t, &target, {source, p1, literal})
+
+	result := materialize_generalized(&profile, &target)
+	testing.expect_value(t, result.error, rule.Error_Code.None)
+	testing.expect(t, has(&target, {literal, p2, source}))
+}
+
+@(test)
 test_schema_domain_and_range_rules_drive_rdfs_instance_closure :: proc(t: ^testing.T) {
 	target: store.Store
 	testing.expect_value(t, store.init(&target), store.Error_Code.None)

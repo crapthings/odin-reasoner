@@ -108,6 +108,12 @@ literal-subject conclusion. The `allValuesFrom` conclusion has the same boundary
 when its property object is a literal. Other literal-object property assertions,
 including `hasValue`, remain available to the non-reversing rules.
 
+`materialize_generalized` is the explicit W3C-oriented static path for callers
+that need generalized-RDF conclusions. It retains literal-subject heads while
+keeping asserted input strict RDF. This makes the datatype rule heads
+representable; its dynamic datatype phase is introduced separately, so the
+method alone is not a complete OWL 2 RL conformance claim.
+
 Equality follows the W3C reflexive, symmetric, transitive, and replacement rule
 table for every strict RDF head the store can represent. A literal object cannot
 be the subject of an RDF triple, so its reflexive/symmetric equality statement

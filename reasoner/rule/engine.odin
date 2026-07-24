@@ -39,9 +39,13 @@ Rule :: struct {
 }
 
 // Options bounds one materialization. A zero limit disables it.
+// generalized_heads opts into internal generalized-RDF conclusions, such as a
+// literal subject produced by OWL 2 RL's datatype and inverse rules. Input
+// admission remains strict RDF through store.insert_triple.
 Options :: struct {
 	max_rounds:      int,
 	max_derivations: int,
+	generalized_heads: bool,
 }
 
 Error_Code :: enum {
@@ -259,7 +263,7 @@ derivation_at :: proc(materializer: ^Materializer, index: int) -> (Derivation_Vi
 	for atom in state.rule.head {
 		fact, valid := head_fact(atom, state.binding)
 		if !valid { state.run.error = .Invalid_Rule; return }
-		if !valid_rdf_head(state.run.work, fact) do continue
+		if !state.run.options.generalized_heads && !valid_rdf_head(state.run.work, fact) do continue
 		if store.contains(state.run.work, fact) do continue
 		if state.run.options.max_derivations > 0 && state.run.derivation_count >= state.run.options.max_derivations {
 			state.run.error = .Max_Derivations
@@ -411,8 +415,17 @@ materialize :: proc(materializer: ^Materializer, target: ^store.Store, rules: []
 
 	initial_facts := store.fact_count(target)
 	for index in initial_facts..<store.fact_count(&work) {
-		id, _, _, found := store.fact_at(&work, index)
+		id, fact, _, found := store.fact_at(&work, index)
 		if !found { result.error = .Store_Error; result.store_error = .Invalid_Fact; return result }
+		if options.generalized_heads {
+			added, store_error := store.insert(target, fact, .Inferred)
+			if store_error != .None || !added {
+				result.error = .Store_Error
+				result.store_error = store_error
+				return result
+			}
+			continue
+		}
 		triple, valid := store.triple_for(&work, id)
 		if !valid { result.error = .Store_Error; result.store_error = .Invalid_Fact; return result }
 		added, store_error := store.insert_triple(target, triple, .Inferred)

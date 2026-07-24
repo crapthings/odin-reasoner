@@ -602,3 +602,15 @@ materialize :: proc(profile: ^Profile, target: ^store.Store, options: rule.Optio
 	if !profile.initialized do return rule.Result{error = .Invalid_Rule}
 	return rule.materialize(&profile.materializer, target, profile.rules[:], options)
 }
+
+// materialize_generalized reaches the static RDFS/OWL closure while retaining
+// generalized RDF heads required by the W3C OWL 2 RL rule table. In particular,
+// a literal may occur in inferred subject position. Asserted input remains
+// strict RDF because store.insert_triple continues to validate RDF 1.1 terms.
+// Use materialize_all for the current strict-RDF complete dynamic closure.
+materialize_generalized :: proc(profile: ^Profile, target: ^store.Store, options: rule.Options = {}) -> rule.Result {
+	if !profile.initialized do return rule.Result{error = .Invalid_Rule}
+	generalized_options := options
+	generalized_options.generalized_heads = true
+	return rule.materialize(&profile.materializer, target, profile.rules[:], generalized_options)
+}
