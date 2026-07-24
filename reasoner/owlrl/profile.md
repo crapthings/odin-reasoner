@@ -50,6 +50,9 @@ and dynamic direction to local evidence and its strict-RDF/resource boundary.
 | `OWL-RL-PRP-IFP` (138) | `P rdf:type owl:InverseFunctionalProperty`, `x1 P y`, `x2 P y` → `x1 owl:sameAs x2` |
 | `OWL-RL-PRP-AP` (158) | Every built-in OWL 2 annotation property → `rdf:type owl:AnnotationProperty` |
 | `OWL-RL-DT-TYPE1` (159) | Every W3C OWL 2 RL supported datatype → `rdf:type rdfs:Datatype` |
+| `OWL-RL-DT-TYPE2` (160, generalized path) | A literal's data value in a supported datatype space → literal `rdf:type` datatype |
+| `OWL-RL-DT-EQ` (161, generalized path) | Two literals with an exactly known same data value → `owl:sameAs` |
+| `OWL-RL-DT-DIFF` (162, generalized path) | Two literals with an exactly known different data value → `owl:differentFrom` |
 | `OWL-RL-CLS-HAS-SELF1` (139) | `R owl:hasSelf "true"^^xsd:boolean/onProperty P`, `x rdf:type R` → `x P x` |
 | `OWL-RL-CLS-HAS-SELF2` (140) | `R owl:hasSelf "true"^^xsd:boolean/onProperty P`, `x P x` → `x rdf:type R` |
 | `OWL-RL-CLS-MAXC2` (154) | `R owl:maxCardinality "1"^^xsd:nonNegativeInteger/onProperty P`, `x rdf:type R`, `x P y1`, `x P y2` → `y1 owl:sameAs y2` when its strict RDF head is representable |
@@ -113,6 +116,13 @@ that need generalized-RDF conclusions. It retains literal-subject heads while
 keeping asserted input strict RDF. This makes the datatype rule heads
 representable; its dynamic datatype phase is introduced separately, so the
 method alone is not a complete OWL 2 RL conformance claim.
+
+`materialize_generalized_datatypes` extends that path with a transactional
+datatype phase. It alternates generalized static rules with `dt-type2`,
+`dt-eq`, and `dt-diff` until a joint fixpoint. Only exact value-space and
+data-value relations supplied by `odin-rdf` are emitted; an `Unknown` relation
+produces no fact. `dt-not-type`, XML canonical equality, temporal equality,
+and the remaining cross-numeric exactness are intentionally not claimed yet.
 
 Equality follows the W3C reflexive, symmetric, transitive, and replacement rule
 table for every strict RDF head the store can represent. A literal object cannot
