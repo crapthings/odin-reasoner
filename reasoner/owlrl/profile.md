@@ -1,8 +1,8 @@
 # OWL 2 RL hierarchy and object-property seed profile
 
 This package is not a complete OWL 2 RL implementation. It composes the six
-documented [RDFS Core rules](../rdfs/profile.md) with fifty-two direct OWL 2 RL
-directions, represented by sixty static rules, from the [W3C OWL 2 RL/RDF
+documented [RDFS Core rules](../rdfs/profile.md) with fifty-three direct OWL 2
+RL directions, represented by ninety-two static rules, from the [W3C OWL 2 RL/RDF
 rules](https://www.w3.org/TR/owl2-profiles/#Reasoning_in_OWL_2_RL_and_RDF_Graphs_Using_Rules):
 
 The [conformance ledger](conformance-ledger.md) maps every implemented static
@@ -49,6 +49,7 @@ and dynamic direction to local evidence and its strict-RDF/resource boundary.
 | `OWL-RL-PRP-FP` (137) | `P rdf:type owl:FunctionalProperty`, `x P y1`, `x P y2` → `y1 owl:sameAs y2` |
 | `OWL-RL-PRP-IFP` (138) | `P rdf:type owl:InverseFunctionalProperty`, `x1 P y`, `x2 P y` → `x1 owl:sameAs x2` |
 | `OWL-RL-PRP-AP` (158) | Every built-in OWL 2 annotation property → `rdf:type owl:AnnotationProperty` |
+| `OWL-RL-DT-TYPE1` (159) | Every W3C OWL 2 RL supported datatype → `rdf:type rdfs:Datatype` |
 | `OWL-RL-CLS-HAS-SELF1` (139) | `R owl:hasSelf "true"^^xsd:boolean/onProperty P`, `x rdf:type R` → `x P x` |
 | `OWL-RL-CLS-HAS-SELF2` (140) | `R owl:hasSelf "true"^^xsd:boolean/onProperty P`, `x P x` → `x rdf:type R` |
 | `OWL-RL-CLS-MAXC2` (154) | `R owl:maxCardinality "1"^^xsd:nonNegativeInteger/onProperty P`, `x rdf:type R`, `x P y1`, `x P y2` → `y1 owl:sameAs y2` when its strict RDF head is representable |
@@ -65,12 +66,12 @@ and dynamic direction to local evidence and its strict-RDF/resource boundary.
 
 The RDFS and OWL rules are passed to one semi-naive materializer, so either
 cluster can drive the other to a single bounded fixpoint. `init` reserves all
-sixty-three RDFS/OWL vocabulary terms as one store batch before building rules.
+ninety-six RDFS/OWL vocabulary terms as one store batch before building rules.
 
 ## Complete supported closure
 
 `materialize_all` is the public entry point when an application needs every
-currently supported entailment family. It alternates the static sixty-six-rule
+currently supported entailment family. It alternates the static ninety-eight-rule
 RDFS/OWL table with `owl:oneOf`, `owl:intersectionOf`, `owl:unionOf`,
 `owl:propertyChainAxiom`, and `owl:hasKey` expansion until a joint fixpoint. It uses one cloned
 working store and commits inferred facts only after success: any static-rule,

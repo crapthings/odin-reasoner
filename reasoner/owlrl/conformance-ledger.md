@@ -56,6 +56,7 @@ directions only; they do not claim OWL 1, OWL 2, or full OWL 2 RL conformance.
 | --- | --- | --- |
 | `cax-eqc1`, `cax-eqc2` / 101–102 | `profile_test:test_equivalence_rules_compose_with_rdfs_core_at_one_fixpoint` | RDFS composition |
 | `prp-ap` / 158 | `profile_test:test_builtin_annotation_property_axioms_have_zero_support`, `materialize_all_test:test_materialize_all_retains_zero_premise_annotation_axiom_provenance` | all nine OWL 2 built-in annotation properties and zero-premise provenance in both focused and complete closure |
+| `dt-type1` / 159 | `profile_test:test_owl_rl_datatype_axioms_have_zero_support`, `materialize_all_test:test_materialize_all_retains_zero_premise_datatype_axiom_provenance` | all thirty-two W3C OWL 2 RL datatype resources and zero-premise provenance in both focused and complete closure |
 | `prp-eqp1`, `prp-eqp2` / 103–104 | `profile_test:test_equivalence_rules_compose_with_rdfs_core_at_one_fixpoint`, `test_object_property_rules_compose_at_one_fixpoint` | property closure |
 | `prp-inv1`, `prp-inv2`, `prp-symp`, `prp-trp` / 105–108 | `profile_test:test_object_property_rules_compose_at_one_fixpoint`, `test_reversing_property_rules_skip_literal_subject_heads` | reverse literal heads are omitted under strict RDF |
 | `scm-dom1`, `scm-dom2`, `scm-rng1`, `scm-rng2` / 109–112 | `profile_test:test_schema_domain_and_range_rules_drive_rdfs_instance_closure` | schema and instance closure |

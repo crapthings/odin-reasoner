@@ -66,6 +66,7 @@ OWL_RL_CLS_MAXQC3        :: rule.Rule_ID(155)
 OWL_RL_CLS_MAXQC4        :: rule.Rule_ID(156)
 OWL_RL_PRP_KEY           :: rule.Rule_ID(157)
 OWL_RL_PRP_AP            :: rule.Rule_ID(158)
+OWL_RL_DT_TYPE1          :: rule.Rule_ID(159)
 
 OWL_EQUIVALENT_CLASS    :: "http://www.w3.org/2002/07/owl#equivalentClass"
 OWL_EQUIVALENT_PROPERTY :: "http://www.w3.org/2002/07/owl#equivalentProperty"
@@ -124,6 +125,48 @@ RDFS_LABEL                :: "http://www.w3.org/2000/01/rdf-schema#label"
 RDFS_COMMENT              :: "http://www.w3.org/2000/01/rdf-schema#comment"
 RDFS_SEE_ALSO             :: "http://www.w3.org/2000/01/rdf-schema#seeAlso"
 RDFS_IS_DEFINED_BY        :: "http://www.w3.org/2000/01/rdf-schema#isDefinedBy"
+RDFS_DATATYPE             :: "http://www.w3.org/2000/01/rdf-schema#Datatype"
+RDF_PLAIN_LITERAL         :: "http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral"
+RDF_XML_LITERAL           :: "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral"
+
+// OWL_RL_DATATYPE_IRIS is the complete W3C OWL 2 RL supported datatype set.
+// It is deliberately a registry rather than a lexical-value implementation:
+// dt-type1 needs only these datatype resources, while dt-type2/dt-eq/dt-diff/
+// dt-not-type will consume the same list after value-space support is added.
+OWL_RL_DATATYPE_IRIS :: [32]string{
+	RDF_PLAIN_LITERAL,
+	RDF_XML_LITERAL,
+	"http://www.w3.org/2000/01/rdf-schema#Literal",
+	"http://www.w3.org/2001/XMLSchema#decimal",
+	"http://www.w3.org/2001/XMLSchema#integer",
+	"http://www.w3.org/2001/XMLSchema#nonNegativeInteger",
+	"http://www.w3.org/2001/XMLSchema#nonPositiveInteger",
+	"http://www.w3.org/2001/XMLSchema#positiveInteger",
+	"http://www.w3.org/2001/XMLSchema#negativeInteger",
+	"http://www.w3.org/2001/XMLSchema#long",
+	"http://www.w3.org/2001/XMLSchema#int",
+	"http://www.w3.org/2001/XMLSchema#short",
+	"http://www.w3.org/2001/XMLSchema#byte",
+	"http://www.w3.org/2001/XMLSchema#unsignedLong",
+	"http://www.w3.org/2001/XMLSchema#unsignedInt",
+	"http://www.w3.org/2001/XMLSchema#unsignedShort",
+	"http://www.w3.org/2001/XMLSchema#unsignedByte",
+	"http://www.w3.org/2001/XMLSchema#float",
+	"http://www.w3.org/2001/XMLSchema#double",
+	"http://www.w3.org/2001/XMLSchema#string",
+	"http://www.w3.org/2001/XMLSchema#normalizedString",
+	"http://www.w3.org/2001/XMLSchema#token",
+	"http://www.w3.org/2001/XMLSchema#language",
+	"http://www.w3.org/2001/XMLSchema#Name",
+	"http://www.w3.org/2001/XMLSchema#NCName",
+	"http://www.w3.org/2001/XMLSchema#NMTOKEN",
+	"http://www.w3.org/2001/XMLSchema#boolean",
+	"http://www.w3.org/2001/XMLSchema#hexBinary",
+	"http://www.w3.org/2001/XMLSchema#base64Binary",
+	"http://www.w3.org/2001/XMLSchema#anyURI",
+	"http://www.w3.org/2001/XMLSchema#dateTime",
+	"http://www.w3.org/2001/XMLSchema#dateTimeStamp",
+}
 
 Terms :: struct {
 	rdf_type:            term.Term_ID,
@@ -181,6 +224,8 @@ Terms :: struct {
 	on_class:             term.Term_ID,
 	annotation_property:  term.Term_ID,
 	annotation_properties: [9]term.Term_ID,
+	rdfs_datatype:        term.Term_ID,
+	owl_rl_datatypes:     [32]term.Term_ID,
 }
 
 Error_Code :: enum { None, Store_Error, RDFS_Error }
@@ -199,15 +244,15 @@ error_message :: proc(code: Error_Code) -> string {
 	head: [1]rule.Triple_Template,
 }
 
-// Profile owns a combined sixty-six-rule table: RDFS Core plus sixty static
-// instances of fifty-two documented OWL 2 RL directions. prp-ap has nine
-// zero-body instances, one for each W3C built-in annotation property.
+// Profile owns a combined ninety-eight-rule table: RDFS Core plus ninety-two
+// static instances of fifty-three documented OWL 2 RL directions. prp-ap has
+// nine zero-body instances and dt-type1 has thirty-two, one per W3C resource.
 // Do not copy it after init because Rule slices borrow embedded definitions.
 Profile :: struct {
 	rdfs:         rdfs.Profile,
 	terms:        Terms,
-	definitions:  [60]Definition,
-	rules:        [66]rule.Rule,
+	definitions:  [92]Definition,
+	rules:        [98]rule.Rule,
 	materializer: rule.Materializer,
 	closure_provenance: Closure_Provenance,
 	initialized:  bool,
@@ -314,7 +359,7 @@ Profile :: struct {
 // initializing the composed RDFS profile. This prevents a term-limit error
 // from leaving a partially admitted OWL RL vocabulary batch.
 init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Error_Code) {
-	values := [63]rdf.Term{
+	base_values := [63]rdf.Term{
 		rdf.iri(rdfs.RDF_TYPE), rdf.iri(rdfs.RDFS_SUBCLASS), rdf.iri(rdfs.RDFS_SUBPROPERTY),
 		rdf.iri(rdfs.RDFS_DOMAIN_IRI), rdf.iri(rdfs.RDFS_RANGE_IRI),
 		rdf.iri(OWL_EQUIVALENT_CLASS), rdf.iri(OWL_EQUIVALENT_PROPERTY), rdf.iri(OWL_INVERSE_OF),
@@ -346,7 +391,11 @@ init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Erro
 		rdf.iri(RDFS_LABEL), rdf.iri(RDFS_COMMENT), rdf.iri(RDFS_SEE_ALSO), rdf.iri(RDFS_IS_DEFINED_BY),
 		rdf.iri(OWL_DEPRECATED), rdf.iri(OWL_VERSION_INFO), rdf.iri(OWL_PRIOR_VERSION), rdf.iri(OWL_BACKWARD_COMPATIBLE_WITH), rdf.iri(OWL_INCOMPATIBLE_WITH),
 	}
-	ids: [63]term.Term_ID
+	values: [96]rdf.Term
+	for value, value_index in base_values do values[value_index] = value
+	values[63] = rdf.iri(RDFS_DATATYPE)
+	for datatype_iri, datatype_index in OWL_RL_DATATYPE_IRIS do values[64 + datatype_index] = rdf.iri(datatype_iri)
+	ids: [96]term.Term_ID
 	if store_error := store.intern_terms(target, values[:], ids[:]); store_error != .None do return .Store_Error, store_error
 	rdfs_error, nested_store_error := rdfs.init(&profile.rdfs, target)
 	if rdfs_error != .None do return .RDFS_Error, nested_store_error
@@ -406,7 +455,9 @@ init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Erro
 		on_class = ids[52],
 		annotation_property = ids[53],
 		annotation_properties = {ids[54], ids[55], ids[56], ids[57], ids[58], ids[59], ids[60], ids[61], ids[62]},
+		rdfs_datatype = ids[63],
 	}
+	for datatype_index in 0..<len(profile.terms.owl_rl_datatypes) do profile.terms.owl_rl_datatypes[datatype_index] = ids[64 + datatype_index]
 	base_rules := rdfs.rule_set(&profile.rdfs)
 	for index in 0..<len(base_rules) do profile.rules[index] = base_rules[index]
 	c1, c2, x, p1, p2, y :=
@@ -568,6 +619,10 @@ init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Erro
 	for annotation_property, annotation_index in profile.terms.annotation_properties {
 		set_zero_rule(profile, 57 + annotation_index, OWL_RL_PRP_AP,
 			{rule.constant(annotation_property), rule.constant(profile.terms.rdf_type), rule.constant(profile.terms.annotation_property)})
+	}
+	for datatype, datatype_index in profile.terms.owl_rl_datatypes {
+		set_zero_rule(profile, 66 + datatype_index, OWL_RL_DT_TYPE1,
+			{rule.constant(datatype), rule.constant(profile.terms.rdf_type), rule.constant(profile.terms.rdfs_datatype)})
 	}
 	rule.init(&profile.materializer)
 	init_closure_provenance(&profile.closure_provenance)
