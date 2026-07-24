@@ -560,6 +560,47 @@ test_max_cardinality_one_derives_representable_equality_only :: proc(t: ^testing
 }
 
 @(test)
+test_max_qualified_cardinality_one_derives_representable_equality_only :: proc(t: ^testing.T) {
+	target: store.Store
+	testing.expect_value(t, store.init(&target), store.Error_Code.None)
+	defer store.destroy(&target)
+	profile: Profile
+	profile_error, store_error := init(&profile, &target)
+	testing.expect_value(t, profile_error, Error_Code.None)
+	testing.expect_value(t, store_error, store.Error_Code.None)
+	defer destroy(&profile)
+
+	qualified, qualified_property, qualified_class, qualified_subject := rdf.iri("urn:max-qualified-one"), rdf.iri("urn:max-qualified-property"), rdf.iri("urn:max-qualified-class"), rdf.iri("urn:max-qualified-subject")
+	qualified_left, qualified_right := rdf.iri("urn:max-qualified-left"), rdf.iri("urn:max-qualified-right")
+	add(t, &target, {qualified, rdf.iri(OWL_MAX_QUALIFIED_CARDINALITY), rdf.typed_literal("1", XSD_NON_NEGATIVE_INTEGER)})
+	add(t, &target, {qualified, rdf.iri(OWL_ON_PROPERTY), qualified_property})
+	add(t, &target, {qualified, rdf.iri(OWL_ON_CLASS), qualified_class})
+	add(t, &target, {qualified_subject, rdf.iri(rdfs.RDF_TYPE), qualified})
+	add(t, &target, {qualified_subject, qualified_property, qualified_left})
+	add(t, &target, {qualified_subject, qualified_property, qualified_right})
+	add(t, &target, {qualified_left, rdf.iri(rdfs.RDF_TYPE), qualified_class})
+	add(t, &target, {qualified_right, rdf.iri(rdfs.RDF_TYPE), qualified_class})
+
+	thing_qualified, thing_property, thing_subject := rdf.iri("urn:max-qualified-thing-one"), rdf.iri("urn:max-qualified-thing-property"), rdf.iri("urn:max-qualified-thing-subject")
+	thing_left, thing_right := rdf.iri("urn:max-qualified-thing-left"), rdf.iri("urn:max-qualified-thing-right")
+	literal_left, literal_right := rdf.literal("thing-left"), rdf.literal("thing-right")
+	add(t, &target, {thing_qualified, rdf.iri(OWL_MAX_QUALIFIED_CARDINALITY), rdf.typed_literal("1", XSD_NON_NEGATIVE_INTEGER)})
+	add(t, &target, {thing_qualified, rdf.iri(OWL_ON_PROPERTY), thing_property})
+	add(t, &target, {thing_qualified, rdf.iri(OWL_ON_CLASS), rdf.iri(OWL_THING)})
+	add(t, &target, {thing_subject, rdf.iri(rdfs.RDF_TYPE), thing_qualified})
+	add(t, &target, {thing_subject, thing_property, thing_left})
+	add(t, &target, {thing_subject, thing_property, thing_right})
+	add(t, &target, {thing_subject, thing_property, literal_left})
+	add(t, &target, {thing_subject, thing_property, literal_right})
+
+	result := materialize(&profile, &target)
+	testing.expect_value(t, result.error, rule.Error_Code.None)
+	testing.expect(t, has(&target, {qualified_left, rdf.iri(OWL_SAME_AS), qualified_right}))
+	testing.expect(t, has(&target, {thing_left, rdf.iri(OWL_SAME_AS), thing_right}))
+	testing.expect(t, !has(&target, {literal_left, rdf.iri(OWL_SAME_AS), literal_right}))
+}
+
+@(test)
 test_owlrl_vocabulary_batch_respects_store_term_limit :: proc(t: ^testing.T) {
 	target: store.Store
 	testing.expect_value(t, store.init(&target, {max_terms = 6}), store.Error_Code.None)

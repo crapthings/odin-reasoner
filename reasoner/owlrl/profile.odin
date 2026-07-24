@@ -62,6 +62,8 @@ OWL_RL_CLS_INT2          :: rule.Rule_ID(151)
 OWL_RL_CLS_UNI           :: rule.Rule_ID(152)
 OWL_RL_PRP_SPO2          :: rule.Rule_ID(153)
 OWL_RL_CLS_MAXC2         :: rule.Rule_ID(154)
+OWL_RL_CLS_MAXQC3        :: rule.Rule_ID(155)
+OWL_RL_CLS_MAXQC4        :: rule.Rule_ID(156)
 
 OWL_EQUIVALENT_CLASS    :: "http://www.w3.org/2002/07/owl#equivalentClass"
 OWL_EQUIVALENT_PROPERTY :: "http://www.w3.org/2002/07/owl#equivalentProperty"
@@ -103,6 +105,8 @@ OWL_OBJECT_PROPERTY       :: "http://www.w3.org/2002/07/owl#ObjectProperty"
 OWL_DATATYPE_PROPERTY     :: "http://www.w3.org/2002/07/owl#DatatypeProperty"
 OWL_HAS_KEY               :: "http://www.w3.org/2002/07/owl#hasKey"
 OWL_MAX_CARDINALITY       :: "http://www.w3.org/2002/07/owl#maxCardinality"
+OWL_MAX_QUALIFIED_CARDINALITY :: "http://www.w3.org/2002/07/owl#maxQualifiedCardinality"
+OWL_ON_CLASS              :: "http://www.w3.org/2002/07/owl#onClass"
 XSD_BOOLEAN               :: "http://www.w3.org/2001/XMLSchema#boolean"
 XSD_NON_NEGATIVE_INTEGER  :: "http://www.w3.org/2001/XMLSchema#nonNegativeInteger"
 RDF_FIRST                 :: "http://www.w3.org/1999/02/22-rdf-syntax-ns#first"
@@ -161,6 +165,8 @@ Terms :: struct {
 	max_cardinality:      term.Term_ID,
 	zero_cardinality:     term.Term_ID,
 	one_cardinality:      term.Term_ID,
+	max_qualified_cardinality: term.Term_ID,
+	on_class:             term.Term_ID,
 }
 
 Error_Code :: enum { None, Store_Error, RDFS_Error }
@@ -175,19 +181,19 @@ error_message :: proc(code: Error_Code) -> string {
 }
 
 @(private) Definition :: struct {
-	body: [5]rule.Triple_Template,
+	body: [8]rule.Triple_Template,
 	head: [1]rule.Triple_Template,
 }
 
-// Profile owns a combined fifty-five-rule table: RDFS Core plus forty-nine
+// Profile owns a combined fifty-seven-rule table: RDFS Core plus fifty-one
 // documented OWL 2 RL hierarchy, object-property, schema, value, equality, and
 // functional-property rules.
 // Do not copy it after init because Rule slices borrow embedded definitions.
 Profile :: struct {
 	rdfs:         rdfs.Profile,
 	terms:        Terms,
-	definitions:  [49]Definition,
-	rules:        [55]rule.Rule,
+	definitions:  [51]Definition,
+	rules:        [57]rule.Rule,
 	materializer: rule.Materializer,
 	closure_provenance: Closure_Provenance,
 	initialized:  bool,
@@ -245,6 +251,32 @@ Profile :: struct {
 
 @(private) set_five_rule :: proc(profile: ^Profile, index: int, id: rule.Rule_ID, body: [5]rule.Triple_Template, head: rule.Triple_Template) {
 	definition_index := index - 6
+	profile.definitions[definition_index].body[0] = body[0]
+	profile.definitions[definition_index].body[1] = body[1]
+	profile.definitions[definition_index].body[2] = body[2]
+	profile.definitions[definition_index].body[3] = body[3]
+	profile.definitions[definition_index].body[4] = body[4]
+	profile.definitions[definition_index].head = {head}
+	profile.rules[index] = {
+		id = id,
+		body = profile.definitions[definition_index].body[:5],
+		head = profile.definitions[definition_index].head[:],
+	}
+}
+
+@(private) set_six_rule :: proc(profile: ^Profile, index: int, id: rule.Rule_ID, body: [6]rule.Triple_Template, head: rule.Triple_Template) {
+	definition_index := index - 6
+	for body_index in 0..<6 do profile.definitions[definition_index].body[body_index] = body[body_index]
+	profile.definitions[definition_index].head = {head}
+	profile.rules[index] = {
+		id = id,
+		body = profile.definitions[definition_index].body[:6],
+		head = profile.definitions[definition_index].head[:],
+	}
+}
+
+@(private) set_eight_rule :: proc(profile: ^Profile, index: int, id: rule.Rule_ID, body: [8]rule.Triple_Template, head: rule.Triple_Template) {
+	definition_index := index - 6
 	profile.definitions[definition_index].body = body
 	profile.definitions[definition_index].head = {head}
 	profile.rules[index] = {
@@ -258,7 +290,7 @@ Profile :: struct {
 // initializing the composed RDFS profile. This prevents a term-limit error
 // from leaving a partially admitted OWL RL vocabulary batch.
 init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Error_Code) {
-	values := [51]rdf.Term{
+	values := [53]rdf.Term{
 		rdf.iri(rdfs.RDF_TYPE), rdf.iri(rdfs.RDFS_SUBCLASS), rdf.iri(rdfs.RDFS_SUBPROPERTY),
 		rdf.iri(rdfs.RDFS_DOMAIN_IRI), rdf.iri(rdfs.RDFS_RANGE_IRI),
 		rdf.iri(OWL_EQUIVALENT_CLASS), rdf.iri(OWL_EQUIVALENT_PROPERTY), rdf.iri(OWL_INVERSE_OF),
@@ -285,8 +317,9 @@ init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Erro
 		rdf.iri(OWL_HAS_KEY),
 		rdf.iri(OWL_DISTINCT_MEMBERS),
 		rdf.iri(OWL_MAX_CARDINALITY), rdf.typed_literal("0", XSD_NON_NEGATIVE_INTEGER), rdf.typed_literal("1", XSD_NON_NEGATIVE_INTEGER),
+		rdf.iri(OWL_MAX_QUALIFIED_CARDINALITY), rdf.iri(OWL_ON_CLASS),
 	}
-	ids: [51]term.Term_ID
+	ids: [53]term.Term_ID
 	if store_error := store.intern_terms(target, values[:], ids[:]); store_error != .None do return .Store_Error, store_error
 	rdfs_error, nested_store_error := rdfs.init(&profile.rdfs, target)
 	if rdfs_error != .None do return .RDFS_Error, nested_store_error
@@ -342,6 +375,8 @@ init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Erro
 		max_cardinality = ids[48],
 		zero_cardinality = ids[49],
 		one_cardinality = ids[50],
+		max_qualified_cardinality = ids[51],
+		on_class = ids[52],
 	}
 	base_rules := rdfs.rule_set(&profile.rdfs)
 	for index in 0..<len(base_rules) do profile.rules[index] = base_rules[index]
@@ -495,6 +530,12 @@ init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Erro
 	set_five_rule(profile, 54, OWL_RL_CLS_MAXC2,
 		{{rule.variable(c1), rule.constant(profile.terms.max_cardinality), rule.constant(profile.terms.one_cardinality)}, {rule.variable(c1), rule.constant(profile.terms.on_property), rule.variable(p1)}, {rule.variable(x), rule.constant(profile.terms.rdf_type), rule.variable(c1)}, {rule.variable(x), rule.variable(p1), rule.variable(y)}, {rule.variable(x), rule.variable(p1), rule.variable(c2)}},
 		{rule.variable(y), rule.constant(profile.terms.same_as), rule.variable(c2)})
+	set_eight_rule(profile, 55, OWL_RL_CLS_MAXQC3,
+		{{rule.variable(c1), rule.constant(profile.terms.max_qualified_cardinality), rule.constant(profile.terms.one_cardinality)}, {rule.variable(c1), rule.constant(profile.terms.on_property), rule.variable(p1)}, {rule.variable(c1), rule.constant(profile.terms.on_class), rule.variable(c2)}, {rule.variable(x), rule.constant(profile.terms.rdf_type), rule.variable(c1)}, {rule.variable(x), rule.variable(p1), rule.variable(y)}, {rule.variable(y), rule.constant(profile.terms.rdf_type), rule.variable(c2)}, {rule.variable(x), rule.variable(p1), rule.variable(p2)}, {rule.variable(p2), rule.constant(profile.terms.rdf_type), rule.variable(c2)}},
+		{rule.variable(y), rule.constant(profile.terms.same_as), rule.variable(p2)})
+	set_six_rule(profile, 56, OWL_RL_CLS_MAXQC4,
+		{{rule.variable(c1), rule.constant(profile.terms.max_qualified_cardinality), rule.constant(profile.terms.one_cardinality)}, {rule.variable(c1), rule.constant(profile.terms.on_property), rule.variable(p1)}, {rule.variable(c1), rule.constant(profile.terms.on_class), rule.constant(profile.terms.owl_thing)}, {rule.variable(x), rule.constant(profile.terms.rdf_type), rule.variable(c1)}, {rule.variable(x), rule.variable(p1), rule.variable(y)}, {rule.variable(x), rule.variable(p1), rule.variable(p2)}},
+		{rule.variable(y), rule.constant(profile.terms.same_as), rule.variable(p2)})
 	rule.init(&profile.materializer)
 	init_closure_provenance(&profile.closure_provenance)
 	profile.initialized = true

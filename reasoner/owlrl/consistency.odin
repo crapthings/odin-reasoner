@@ -45,13 +45,14 @@ Violation_Kind :: enum {
 	Irreflexive_Property,
 	Asymmetric_Property,
 	Max_Cardinality_Zero,
+	Max_Qualified_Cardinality_Zero,
 }
 
-// Violation stores up to five closure Fact_IDs that witness one contradiction.
+// Violation stores up to six closure Fact_IDs that witness one contradiction.
 // The support array is sorted and only its first support_count entries are valid.
 Violation :: struct {
 	kind:          Violation_Kind,
-	supports:      [5]store.Fact_ID,
+	supports:      [6]store.Fact_ID,
 	support_count: int,
 }
 
@@ -77,7 +78,7 @@ violation_at :: proc(report: ^Report, index: int) -> (Violation, bool) {
 
 @(private) Violation_Key :: struct {
 	kind:          Violation_Kind,
-	supports:      [5]store.Fact_ID,
+	supports:      [6]store.Fact_ID,
 	support_count: int,
 }
 
@@ -342,6 +343,39 @@ violation_at :: proc(report: ^Report, index: int) -> (Violation, bool) {
 	}
 }
 
+// check_max_qualified_cardinality_zero implements cls-maxqc1 and cls-maxqc2.
+// The former needs a representable type fact for the property object; the
+// latter has owl:Thing as its class and therefore needs no object type fact.
+@(private) check_max_qualified_cardinality_zero :: proc(state: ^Check_State, max_cardinality_id: store.Fact_ID, restriction: term.Term_ID) {
+	for on_property_index in 0..<store.fact_count(state.target) {
+		on_property_id, on_property_fact, _, on_property_found := store.fact_at(state.target, on_property_index)
+		if !on_property_found { state.error = .Out_Of_Memory; return }
+		if on_property_fact.subject != restriction || on_property_fact.predicate != state.profile.terms.on_property do continue
+		for on_class_index in 0..<store.fact_count(state.target) {
+			on_class_id, on_class_fact, _, on_class_found := store.fact_at(state.target, on_class_index)
+			if !on_class_found { state.error = .Out_Of_Memory; return }
+			if on_class_fact.subject != restriction || on_class_fact.predicate != state.profile.terms.on_class do continue
+			for type_index in 0..<store.fact_count(state.target) {
+				type_id, type_fact, _, type_found := store.fact_at(state.target, type_index)
+				if !type_found { state.error = .Out_Of_Memory; return }
+				if type_fact.predicate != state.profile.terms.rdf_type || type_fact.object != restriction do continue
+				for property_index in 0..<store.fact_count(state.target) {
+					property_id, property_fact, _, property_found := store.fact_at(state.target, property_index)
+					if !property_found { state.error = .Out_Of_Memory; return }
+					if property_fact.subject != type_fact.subject || property_fact.predicate != on_property_fact.object do continue
+					if on_class_fact.object == state.profile.terms.owl_thing {
+						if !add_violation(state, .Max_Qualified_Cardinality_Zero, []store.Fact_ID{max_cardinality_id, on_property_id, on_class_id, type_id, property_id}) do return
+						continue
+					}
+					member_type := store.id_for_fact(state.target, {subject = property_fact.object, predicate = state.profile.terms.rdf_type, object = on_class_fact.object})
+					if member_type != store.INVALID_FACT_ID && !add_violation(state, .Max_Qualified_Cardinality_Zero, []store.Fact_ID{max_cardinality_id, on_property_id, on_class_id, type_id, property_id, member_type}) do return
+				}
+				if state.error != .None do return
+			}
+		}
+	}
+}
+
 // check_consistency scans an already materialized closure for the documented
 // OWL 2 RL false rules. It does not mutate the store. On configured report
 // limit or allocation failure, report is cleared and the error is explicit.
@@ -358,6 +392,8 @@ check_consistency :: proc(profile: ^Profile, target: ^store.Store, report: ^Repo
 		switch fact.predicate {
 		case profile.terms.max_cardinality:
 			if fact.object == profile.terms.zero_cardinality do check_max_cardinality_zero(&state, id, fact.subject)
+		case profile.terms.max_qualified_cardinality:
+			if fact.object == profile.terms.zero_cardinality do check_max_qualified_cardinality_zero(&state, id, fact.subject)
 		case profile.terms.same_as:
 			other := store.id_for_fact(target, {subject = fact.subject, predicate = profile.terms.different_from, object = fact.object})
 			if other != store.INVALID_FACT_ID do _ = add_violation(&state, .Same_As_Different_From, []store.Fact_ID{id, other})
