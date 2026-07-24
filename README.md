@@ -42,6 +42,12 @@ odin-rdf  ── RDF terms, parsers, writers ──>  odin-reasoner  ── infe
 See the [RDFS conformance ledger](reasoner/rdfs/conformance-ledger.md) and the
 [OWL profile](reasoner/owlrl/profile.md) for the exact rule surface.
 
+Use `owlrl.materialize_all` when the application needs the whole supported OWL
+closure: it reaches one transactional fixpoint across the static profile and
+all four RDF-list families. The focused list entry points remain available for
+isolated use. Use `owlrl.materialize_all_checked` to scan that same completed
+closure for implemented OWL contradictions without retracting it.
+
 ## Why this shape
 
 - **Bounded by contract.** Term, lexical-byte, fact, round, derivation, list,
@@ -49,8 +55,9 @@ See the [RDFS conformance ledger](reasoner/rdfs/conformance-ledger.md) and the
   silently truncating work.
 - **Closure commits as a unit.** Semi-naive materialization works on a cloned
   store and transfers inferred facts only after a successful fixpoint.
-- **Every inferred fact has a first support.** The materializer retains the
-  rule ID and ordered supporting fact IDs for each derived fact.
+- **Every complete-closure fact has a first support.** `materialize_all`
+  retains stable rule IDs and ordered supporting fact IDs for both static and
+  RDF-list-derived conclusions.
 - **Storage and I/O remain yours.** One in-memory RDF graph is intentional;
   named graphs, persistence, transactions, and networking are outside the API.
 - **Dependencies stay directional.** The core uses only `odin-rdf:rdf`; query

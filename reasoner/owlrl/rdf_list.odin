@@ -38,24 +38,51 @@ list_error_message :: proc(code: List_Error_Code) -> string {
 	return "unknown RDF list error"
 }
 
-// List owns its Term_ID slice until destroy_list. IDs remain valid while the
-// source Store is alive; a failed read clears items so no partial list escapes.
-List :: struct { items: [dynamic]term.Term_ID }
+// List owns decoded terms and the RDF:first/rest fact IDs that witness them
+// until destroy_list. A failed read clears every slice so no partial list or
+// provenance support escapes.
+List :: struct {
+	items:       [dynamic]term.Term_ID,
+	first_facts: [dynamic]store.Fact_ID,
+	rest_facts:  [dynamic]store.Fact_ID,
+}
 
-init_list :: proc(list: ^List) { list^ = List{items = make([dynamic]term.Term_ID)} }
+init_list :: proc(list: ^List) {
+	list^ = List{
+		items = make([dynamic]term.Term_ID),
+		first_facts = make([dynamic]store.Fact_ID),
+		rest_facts = make([dynamic]store.Fact_ID),
+	}
+}
 
 destroy_list :: proc(list: ^List) {
 	delete(list.items)
+	delete(list.first_facts)
+	delete(list.rest_facts)
 	list^ = {}
 }
 
-clear_list :: proc(list: ^List) { clear(&list.items) }
+clear_list :: proc(list: ^List) {
+	clear(&list.items)
+	clear(&list.first_facts)
+	clear(&list.rest_facts)
+}
 
 list_count :: proc(list: ^List) -> int { return len(list.items) }
 
 list_item_at :: proc(list: ^List, index: int) -> (term.Term_ID, bool) {
 	if index < 0 || index >= len(list.items) do return term.INVALID_TERM_ID, false
 	return list.items[index], true
+}
+
+list_first_fact_at :: proc(list: ^List, index: int) -> (store.Fact_ID, bool) {
+	if index < 0 || index >= len(list.first_facts) do return store.INVALID_FACT_ID, false
+	return list.first_facts[index], true
+}
+
+list_rest_fact_at :: proc(list: ^List, index: int) -> (store.Fact_ID, bool) {
+	if index < 0 || index >= len(list.rest_facts) do return store.INVALID_FACT_ID, false
+	return list.rest_facts[index], true
 }
 
 @(private) Object_State :: struct {
@@ -126,6 +153,22 @@ read_list :: proc(profile: ^Profile, target: ^store.Store, head: term.Term_ID, l
 			return .Item_Limit
 		}
 		_, append_error := append(&list.items, item)
+		if append_error != nil {
+			clear_list(list)
+			return .Out_Of_Memory
+		}
+		first_id := store.id_for_fact(target, {subject = current, predicate = profile.terms.rdf_first, object = item})
+		rest_id := store.id_for_fact(target, {subject = current, predicate = profile.terms.rdf_rest, object = next})
+		if first_id == store.INVALID_FACT_ID || rest_id == store.INVALID_FACT_ID {
+			clear_list(list)
+			return .Out_Of_Memory
+		}
+		_, append_error = append(&list.first_facts, first_id)
+		if append_error != nil {
+			clear_list(list)
+			return .Out_Of_Memory
+		}
+		_, append_error = append(&list.rest_facts, rest_id)
 		if append_error != nil {
 			clear_list(list)
 			return .Out_Of_Memory

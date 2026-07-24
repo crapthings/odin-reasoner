@@ -59,6 +59,38 @@ The RDFS and OWL rules are passed to one semi-naive materializer, so either
 cluster can drive the other to a single bounded fixpoint. `init` reserves all
 forty-seven RDFS/OWL vocabulary terms as one store batch before building rules.
 
+## Complete supported closure
+
+`materialize_all` is the public entry point when an application needs every
+currently supported entailment family. It alternates the static fifty-four-rule
+RDFS/OWL table with `owl:oneOf`, `owl:intersectionOf`, `owl:unionOf`, and
+`owl:propertyChainAxiom` expansion until a joint fixpoint. It uses one cloned
+working store and commits inferred facts only after success: any static-rule,
+list, path-frontier, derivation, or outer-round error leaves the caller's store
+unchanged. Its `max_derivations` and `max_rounds` limits apply across all five
+phases; `max_list_items` applies to every decoded collection, and
+`max_path_states` applies to each property-chain frontier.
+
+| ID | Dynamic rule direction |
+| --- | --- |
+| `OWL-RL-CLS-OO` (149) | List member → enclosing `owl:oneOf` class instance |
+| `OWL-RL-CLS-INT1` (150) | All member-class instances → intersection instance |
+| `OWL-RL-CLS-INT2` (151) | Intersection instance → every member-class instance |
+| `OWL-RL-CLS-UNI` (152) | Member-class instance → enclosing union instance |
+| `OWL-RL-PRP-SPO2` (153) | Complete property-list path → declared chain property |
+
+The focused `materialize`, `materialize_one_of`, `materialize_intersection`,
+`materialize_union`, and `materialize_property_chains` entry points remain for
+small, isolated profiles. `materialize_all` exposes complete first-support
+evidence through `closure_derivation_count` and `closure_derivation_at`.
+Static conclusions retain their rule-engine supports; list conclusions retain
+the declaration, every decoded `rdf:first`/`rdf:rest` fact, and the participating
+type or property-path facts. These views borrow from the profile's latest
+successful complete closure. A failed call leaves the preceding successful
+closure provenance intact. The focused dynamic entry points still expose only
+inferred origin, so the legacy `Materializer` is cleared after a successful
+`materialize_all` rather than presenting stale partial evidence.
+
 The strict RDF triple store cannot retain a literal subject. Consequently, an
 inverse or symmetric rule match with a literal in the object position has an
 unrepresentable reverse head and is omitted, just as RDFS range omits a formal
@@ -80,11 +112,13 @@ therefore representable.
 
 ## Consistency report
 
-`materialize_checked` first reaches materialization fixpoint, then returns a
-borrowed consistency status plus an owned `Report`. A nonempty report makes
-`Materialize_Check_Result.consistent` false without discarding the completed
-closure. Each report record carries the two or three closure `Fact_ID`s that
-witness it. `check_consistency` also works on an existing closure.
+`materialize_checked` first reaches the static profile's materialization
+fixpoint, then returns a borrowed consistency status plus an owned `Report`.
+`materialize_all_checked` does the same after the complete supported static and
+RDF-list closure. A nonempty report makes the corresponding `consistent` flag
+false without discarding the completed closure or its provenance. Each report
+record carries closure `Fact_ID` evidence. `check_consistency` also works on an
+existing closure.
 
 The report currently implements `eq-diff1`, class/property disjointness,
 complement classes, `owl:AllDisjointClasses`, `owl:AllDisjointProperties`,
@@ -112,13 +146,14 @@ limit.
 ## `owl:oneOf` materialization
 
 `materialize_one_of` implements the list-dependent `cls-oo` direction: each
-member of a valid `C owl:oneOf (...)` list is inferred as `rdf:type C`. It
-alternates this dynamic phase with the static RDFS/OWL rule table in a cloned
-store until joint fixpoint, and commits inferred facts only on success. The
-dynamic phase has explicit list-item, outer-round, and total-derivation limits.
-Malformed lists or a configured limit leave the caller's store unchanged.
-Dynamic oneOf facts currently do not enter `Materializer` provenance; their
-origin is still `Inferred` in the store.
+member of a valid `C owl:oneOf (...)` list is inferred as `rdf:type C`. It is
+the focused counterpart to `materialize_all`: it alternates this dynamic phase
+with the static RDFS/OWL rule table in a cloned store until joint fixpoint and
+commits inferred facts only on success. The dynamic phase has explicit
+list-item, outer-round, and total-derivation limits. Malformed lists or a
+configured limit leave the caller's store unchanged. Dynamic oneOf facts
+currently do not enter `Materializer` provenance; their origin is still
+`Inferred` in the store.
 
 ## `owl:intersectionOf` materialization
 

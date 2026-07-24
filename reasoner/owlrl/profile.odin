@@ -56,6 +56,11 @@ OWL_RL_SCM_OP_SUBPROPERTY :: rule.Rule_ID(145)
 OWL_RL_SCM_OP_EQUIVALENT :: rule.Rule_ID(146)
 OWL_RL_SCM_DP_SUBPROPERTY :: rule.Rule_ID(147)
 OWL_RL_SCM_DP_EQUIVALENT :: rule.Rule_ID(148)
+OWL_RL_CLS_OO            :: rule.Rule_ID(149)
+OWL_RL_CLS_INT1          :: rule.Rule_ID(150)
+OWL_RL_CLS_INT2          :: rule.Rule_ID(151)
+OWL_RL_CLS_UNI           :: rule.Rule_ID(152)
+OWL_RL_PRP_SPO2          :: rule.Rule_ID(153)
 
 OWL_EQUIVALENT_CLASS    :: "http://www.w3.org/2002/07/owl#equivalentClass"
 OWL_EQUIVALENT_PROPERTY :: "http://www.w3.org/2002/07/owl#equivalentProperty"
@@ -176,6 +181,7 @@ Profile :: struct {
 	definitions:  [48]Definition,
 	rules:        [54]rule.Rule,
 	materializer: rule.Materializer,
+	closure_provenance: Closure_Provenance,
 	initialized:  bool,
 }
 
@@ -473,11 +479,13 @@ init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Erro
 		{rule.variable(p1), rule.constant(profile.terms.rdf_type), rule.constant(profile.terms.datatype_property)},
 		{rule.variable(p1), rule.constant(profile.terms.equivalent_property), rule.variable(p1)})
 	rule.init(&profile.materializer)
+	init_closure_provenance(&profile.closure_provenance)
 	profile.initialized = true
 	return .None, .None
 }
 
 destroy :: proc(profile: ^Profile) {
+	destroy_closure_provenance(&profile.closure_provenance)
 	if profile.initialized do rule.destroy(&profile.materializer)
 	rdfs.destroy(&profile.rdfs)
 	profile^ = {}

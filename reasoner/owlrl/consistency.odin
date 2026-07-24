@@ -379,3 +379,29 @@ materialize_checked :: proc(profile: ^Profile, target: ^store.Store, report: ^Re
 	result.consistent = result.consistency == .None && violation_count(report) == 0
 	return result
 }
+
+// Materialize_All_Check_Result distinguishes a complete supported closure that
+// is inconsistent from a failed complete materialization. When materialization
+// succeeds, inferred facts and closure provenance remain available even when
+// consistent is false or the consistency scan itself reports an explicit error.
+Materialize_All_Check_Result :: struct {
+	materialization: Materialize_All_Result,
+	consistency:    Consistency_Error_Code,
+	consistent:      bool,
+}
+
+// materialize_all_checked first reaches the full supported static/list
+// fixpoint, then scans that committed closure for implemented OWL false rules.
+// A materialization error clears report and leaves the caller store and prior
+// complete-closure provenance unchanged. A consistency error or nonempty report
+// never retracts a successfully committed closure.
+materialize_all_checked :: proc(profile: ^Profile, target: ^store.Store, report: ^Report, materialization_options: Materialize_All_Options = {}, consistency_options: Consistency_Options = {}) -> Materialize_All_Check_Result {
+	result := Materialize_All_Check_Result{materialization = materialize_all(profile, target, materialization_options)}
+	if result.materialization.error != .None {
+		clear_report(report)
+		return result
+	}
+	result.consistency = check_consistency(profile, target, report, consistency_options)
+	result.consistent = result.consistency == .None && violation_count(report) == 0
+	return result
+}

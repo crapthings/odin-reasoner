@@ -47,7 +47,11 @@ other OWL 2 RL rule cluster until each has its own profile and conformance gate.
 The profile now also has a bounded RDF-list decoder as infrastructure; list
 dependent entailment starts with transactional `owl:oneOf`,
 `owl:intersectionOf`, `owl:unionOf`, and bounded `owl:propertyChainAxiom`
-materialization.
+materialization. `materialize_all` now combines the static table and all four
+dynamic list families into one bounded, transactional supported-closure entry
+point. It retains first-support provenance for static and dynamic facts, while
+the remaining Phase 5 work is rule-cluster conformance ledgers before expanding
+OWL scope.
 
 ## Deliberately deferred
 

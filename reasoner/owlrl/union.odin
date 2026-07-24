@@ -28,7 +28,7 @@ Union_Result :: struct {
 	inferred_facts: int,
 }
 
-@(private) add_union_type :: proc(profile: ^Profile, target: ^store.Store, subject, class: term.Term_ID, remaining: int, added_count: ^int) -> (Union_Error_Code, store.Error_Code) {
+@(private) add_union_type :: proc(profile: ^Profile, target: ^store.Store, subject, class: term.Term_ID, remaining: int, added_count: ^int, provenance: ^Closure_Provenance = nil, declaration_id: store.Fact_ID = store.INVALID_FACT_ID, list: ^List = nil, supports: []store.Fact_ID = nil) -> (Union_Error_Code, store.Error_Code) {
 	if remaining >= 0 && added_count^ >= remaining do return .Rule_Error, .None
 	subject_term, subject_ok := store.get_term(target, subject)
 	predicate_term, predicate_ok := store.get_term(target, profile.terms.rdf_type)
@@ -39,17 +39,23 @@ Union_Result :: struct {
 	if store.contains(target, fact) do return .None, .None
 	added, insert_error := store.insert(target, fact, .Inferred)
 	if insert_error != .None do return .Store_Error, insert_error
-	if added do added_count^ += 1
+	if added {
+		added_count^ += 1
+		if provenance != nil {
+			fact_id := store.id_for_fact(target, fact)
+			if fact_id == store.INVALID_FACT_ID || declaration_id == store.INVALID_FACT_ID || list == nil || !append_list_derivation(provenance, fact_id, OWL_RL_CLS_UNI, declaration_id, list, supports) do return .Store_Error, .Out_Of_Memory
+		}
+	}
 	return .None, .None
 }
 
 // remaining is -1 when the global derivation limit is disabled.
-@(private) emit_union :: proc(profile: ^Profile, target: ^store.Store, options: Union_Options, remaining: int) -> (added_count: int, error: Union_Error_Code, list_error: List_Error_Code, store_error: store.Error_Code) {
+@(private) emit_union :: proc(profile: ^Profile, target: ^store.Store, options: Union_Options, remaining: int, provenance: ^Closure_Provenance = nil) -> (added_count: int, error: Union_Error_Code, list_error: List_Error_Code, store_error: store.Error_Code) {
 	list: List
 	init_list(&list)
 	defer destroy_list(&list)
 	for declaration_index in 0..<store.fact_count(target) {
-		_, declaration, _, found := store.fact_at(target, declaration_index)
+		declaration_id, declaration, _, found := store.fact_at(target, declaration_index)
 		if !found do return added_count, .Store_Error, .None, .Invalid_Fact
 		if declaration.predicate != profile.terms.union_of do continue
 		if list_error = read_list(profile, target, declaration.object, &list, {max_items = options.max_list_items}); list_error != .None do return added_count, .List_Error, list_error, .None
@@ -58,10 +64,10 @@ Union_Result :: struct {
 		for item_index in 0..<list_count(&list) {
 			member_class, _ := list_item_at(&list, item_index)
 			for candidate_index in 0..<store.fact_count(target) {
-				_, candidate, _, candidate_found := store.fact_at(target, candidate_index)
+				candidate_id, candidate, _, candidate_found := store.fact_at(target, candidate_index)
 				if !candidate_found do return added_count, .Store_Error, .None, .Invalid_Fact
 				if candidate.predicate != profile.terms.rdf_type || candidate.object != member_class do continue
-				phase_error, insert_error := add_union_type(profile, target, candidate.subject, declaration.subject, remaining, &added_count)
+				phase_error, insert_error := add_union_type(profile, target, candidate.subject, declaration.subject, remaining, &added_count, provenance, declaration_id, &list, []store.Fact_ID{candidate_id})
 				if phase_error != .None do return added_count, phase_error, .None, insert_error
 			}
 		}

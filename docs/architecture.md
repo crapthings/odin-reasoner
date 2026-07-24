@@ -77,8 +77,9 @@ forty-eight-rule OWL 2 RL hierarchy/object-property/schema/value/equality/functi
 transactional limit behavior: a joint fixpoint either commits in full or
 returns the configured limit error without a partial RDFS/OWL closure.
 
-The OWL profile's `materialize_checked` keeps this closure behavior separate
-from semantic consistency: it commits a successful closure, then scans it for
+The OWL profile's `materialize_checked` and `materialize_all_checked` keep
+closure behavior separate from semantic consistency: they commit a successful
+static or complete closure, then scan it for
 implemented OWL 2 RL false rules (including class disjointness,
 `owl:complementOf`, and list-backed `owl:AllDisjointClasses` /
 `owl:AllDisjointProperties`, plus both negative property assertion forms) and
@@ -92,14 +93,23 @@ report and returns `Violation_Limit`, avoiding any ambiguous partial analysis.
 For dynamic RDF-list rules, `store.clone` preserves stable term/fact IDs in an
 independent working copy and `store.commit_inferred` transfers only successful
 inferred facts back to that clone's source dictionary. The
-`owlrl.materialize_one_of`, `owlrl.materialize_intersection`,
-`owlrl.materialize_union`, and `owlrl.materialize_property_chains` entry points
-use this boundary to alternate static rules with RDF-list expansion without
-committing a malformed-list or configured-limit prefix. Intersection rejects
-empty lists because this profile does not model their `owl:Thing` meaning;
-union accepts an empty list but has no finite forward conclusion; and property
-chains require at least two IRI properties with a separate per-hop
-path-frontier bound.
+`owlrl.materialize_all` is the complete supported-closure entry point. It uses
+this boundary to alternate static rules with every supported RDF-list expansion
+without committing a malformed-list or configured-limit prefix. Its focused
+`materialize_one_of`, `materialize_intersection`, `materialize_union`, and
+`materialize_property_chains` counterparts remain available when an application
+intentionally wants one dynamic family only. Intersection rejects empty lists
+because this profile does not model their `owl:Thing` meaning; union accepts an
+empty list but has no finite forward conclusion; and property chains require at
+least two IRI properties with a separate per-hop path-frontier bound.
+`materialize_all` stages an owned closure-provenance ledger beside the working
+store: every static fact copies its rule-engine support, while list facts record
+the declaration, all decoded `rdf:first`/`rdf:rest` facts, and their type or
+path supports. The ledger replaces the profile's previous successful complete
+ledger only after inferred facts commit. `closure_derivation_at` returns a
+borrowed support slice valid until the next successful complete closure or
+`owlrl.destroy`; focused dynamic materializers retain their smaller origin-only
+contract.
 
 ## Optional SPARQL integration
 

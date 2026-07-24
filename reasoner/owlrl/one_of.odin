@@ -37,12 +37,12 @@ One_Of_Result :: struct {
 
 // remaining is -1 when the global derivation limit is disabled; zero therefore
 // correctly means that this phase may add no further facts.
-@(private) emit_one_of :: proc(profile: ^Profile, target: ^store.Store, options: One_Of_Options, remaining: int) -> (added_count: int, error: One_Of_Error_Code, list_error: List_Error_Code, store_error: store.Error_Code) {
+@(private) emit_one_of :: proc(profile: ^Profile, target: ^store.Store, options: One_Of_Options, remaining: int, provenance: ^Closure_Provenance = nil) -> (added_count: int, error: One_Of_Error_Code, list_error: List_Error_Code, store_error: store.Error_Code) {
 	list: List
 	init_list(&list)
 	defer destroy_list(&list)
 	for index in 0..<store.fact_count(target) {
-		_, declaration, _, found := store.fact_at(target, index)
+		declaration_id, declaration, _, found := store.fact_at(target, index)
 		if !found do return added_count, .Store_Error, .None, .Invalid_Fact
 		if declaration.predicate != profile.terms.one_of do continue
 		if list_error = read_list(profile, target, declaration.object, &list, {max_items = options.max_list_items}); list_error != .None do return added_count, .List_Error, list_error, .None
@@ -59,7 +59,13 @@ One_Of_Result :: struct {
 			if remaining >= 0 && added_count >= remaining do return added_count, .Rule_Error, .None, .None
 			added, insert_error := store.insert(target, fact, .Inferred)
 			if insert_error != .None do return added_count, one_of_error_from_store(insert_error), .None, insert_error
-			if added do added_count += 1
+			if added {
+				added_count += 1
+				if provenance != nil {
+					fact_id := store.id_for_fact(target, fact)
+					if fact_id == store.INVALID_FACT_ID || !append_list_derivation(provenance, fact_id, OWL_RL_CLS_OO, declaration_id, &list, nil) do return added_count, .Store_Error, .None, .Out_Of_Memory
+				}
+			}
 		}
 	}
 	return added_count, .None, .None, .None
