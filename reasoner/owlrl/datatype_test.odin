@@ -54,3 +54,33 @@ test_generalized_datatype_materialization_limit_is_transactional :: proc(t: ^tes
 	testing.expect_value(t, result.error, Generalized_Datatype_Error_Code.Rule_Error)
 	testing.expect_value(t, store.fact_count(&target), before)
 }
+
+@(test)
+test_generalized_datatype_checked_reports_dt_not_type :: proc(t: ^testing.T) {
+	target: store.Store
+	testing.expect_value(t, store.init(&target), store.Error_Code.None)
+	defer store.destroy(&target)
+	profile: Profile
+	profile_error, store_error := init(&profile, &target)
+	testing.expect_value(t, profile_error, Error_Code.None)
+	testing.expect_value(t, store_error, store.Error_Code.None)
+	defer destroy(&profile)
+	report: Report
+	init_report(&report)
+	defer destroy_report(&report)
+
+	literal_id, literal_error := store.intern_term(&target, rdf.typed_literal("256", "http://www.w3.org/2001/XMLSchema#integer"))
+	testing.expect_value(t, literal_error, store.Error_Code.None)
+	unsigned_byte := rdf.iri("http://www.w3.org/2001/XMLSchema#unsignedByte")
+	unsigned_byte_id := store.id_for_term(&target, unsigned_byte)
+	testing.expect(t, unsigned_byte_id != 0)
+	added, insert_error := store.insert(&target, {subject = literal_id, predicate = profile.terms.rdf_type, object = unsigned_byte_id}, .Asserted)
+	testing.expect(t, added)
+	testing.expect_value(t, insert_error, store.Error_Code.None)
+
+	result := materialize_generalized_datatypes_checked(&profile, &target, &report)
+	testing.expect_value(t, result.materialization.error, Generalized_Datatype_Error_Code.None)
+	testing.expect_value(t, result.consistency, Consistency_Error_Code.None)
+	testing.expect(t, !result.consistent)
+	testing.expect(t, has_kind(&report, .Datatype_Not_Type))
+}

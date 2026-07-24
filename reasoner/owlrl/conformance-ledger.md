@@ -58,6 +58,7 @@ directions only; they do not claim OWL 1, OWL 2, or full OWL 2 RL conformance.
 | `prp-ap` / 158 | `profile_test:test_builtin_annotation_property_axioms_have_zero_support`, `materialize_all_test:test_materialize_all_retains_zero_premise_annotation_axiom_provenance` | all nine OWL 2 built-in annotation properties and zero-premise provenance in both focused and complete closure |
 | `dt-type1` / 159 | `profile_test:test_owl_rl_datatype_axioms_have_zero_support`, `materialize_all_test:test_materialize_all_retains_zero_premise_datatype_axiom_provenance` | all thirty-two W3C OWL 2 RL datatype resources and zero-premise provenance in both focused and complete closure |
 | generalized `dt-type2`, `dt-eq`, `dt-diff` / 160–162 | `datatype_test:test_generalized_datatype_materialization_derives_exact_type_equality_and_difference`, `test_generalized_datatype_materialization_limit_is_transactional` | generalized RDF only; emits only exact `odin-rdf` Yes/Same/Different results and therefore is deliberately incomplete pending every datatype pair |
+| generalized `dt-not-type` | `datatype_test:test_generalized_datatype_checked_reports_dt_not_type` | generalized literal type assertions only; reports exact `odin-rdf` No results as contradictions |
 | `prp-eqp1`, `prp-eqp2` / 103–104 | `profile_test:test_equivalence_rules_compose_with_rdfs_core_at_one_fixpoint`, `test_object_property_rules_compose_at_one_fixpoint` | property closure |
 | `prp-inv1`, `prp-inv2`, `prp-symp`, `prp-trp` / 105–108 | `profile_test:test_object_property_rules_compose_at_one_fixpoint`, `test_reversing_property_rules_skip_literal_subject_heads` | reverse literal heads are omitted under strict RDF |
 | `scm-dom1`, `scm-dom2`, `scm-rng1`, `scm-rng2` / 109–112 | `profile_test:test_schema_domain_and_range_rules_drive_rdfs_instance_closure` | schema and instance closure |
@@ -113,7 +114,7 @@ origin-only contract; `materialize_all` is the gate for dynamic provenance.
 
 ## Deliberately unmapped OWL 2 RL directions
 
-Not implemented: `dt-not-type`, and the incomplete datatype value-space/equality pairs intentionally represented as `Unknown`; schema self-axioms outside the documented
+Not implemented: datatype value-space/equality pairs intentionally represented as `Unknown`; schema self-axioms outside the documented
 141–148 seed; generalized
 RDF literal-subject equality; and every other W3C OWL 2 RL direction not listed
 above. A term being reserved in the vocabulary is not evidence that its rule is

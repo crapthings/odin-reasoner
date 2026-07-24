@@ -123,6 +123,10 @@ datatype phase. It alternates generalized static rules with `dt-type2`,
 data-value relations supplied by `odin-rdf` are emitted; an `Unknown` relation
 produces no fact. `dt-not-type`, XML canonical equality, temporal equality,
 and the remaining cross-numeric exactness are intentionally not claimed yet.
+`materialize_generalized_datatypes_checked` additionally reports `dt-not-type`
+when a generalized literal type assertion conflicts with an exact value-space
+`No` result; it preserves the completed closure and reports the offending type
+fact as the witness.
 
 Equality follows the W3C reflexive, symmetric, transitive, and replacement rule
 table for every strict RDF head the store can represent. A literal object cannot

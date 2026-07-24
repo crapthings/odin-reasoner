@@ -1,5 +1,6 @@
 package owlrl
 
+import rdf "odin-rdf:rdf"
 import rule "../rule"
 import store "../store"
 import term "../term"
@@ -31,7 +32,7 @@ consistency_error_message :: proc(code: Consistency_Error_Code) -> string {
 }
 
 // Violation_Kind identifies the implemented OWL 2 RL rules whose conclusion is
-// false. RDF-list and datatype false rules remain out of scope for this profile.
+// false. Datatype_Not_Type is available on the generalized datatype path.
 Violation_Kind :: enum {
 	Same_As_Different_From,
 	Disjoint_Classes,
@@ -46,6 +47,26 @@ Violation_Kind :: enum {
 	Asymmetric_Property,
 	Max_Cardinality_Zero,
 	Max_Qualified_Cardinality_Zero,
+	Datatype_Not_Type,
+}
+
+@(private) is_owl_rl_datatype_id :: proc(profile: ^Profile, candidate: term.Term_ID) -> bool {
+	for datatype in profile.terms.owl_rl_datatypes {
+		if datatype == candidate do return true
+	}
+	return false
+}
+
+// check_datatype_not_type implements dt-not-type for a generalized rdf:type
+// fact whose subject is a literal. The fact itself is its complete witness: the
+// value-space failure is determined by odin-rdf's exact No result.
+@(private) check_datatype_not_type :: proc(state: ^Check_State, type_fact_id: store.Fact_ID, fact: store.Fact) {
+	if !is_owl_rl_datatype_id(state.profile, fact.object) do return
+	literal, literal_found := store.get_term(state.target, fact.subject)
+	datatype, datatype_found := store.get_term(state.target, fact.object)
+	if !literal_found || !datatype_found { state.error = .Out_Of_Memory; return }
+	if literal.kind != .Literal do return
+	if rdf.owl_rl_literal_value_membership(literal, datatype.value) == .No do _ = add_violation(state, .Datatype_Not_Type, []store.Fact_ID{type_fact_id})
 }
 
 // Violation stores up to six closure Fact_IDs that witness one contradiction.
@@ -407,6 +428,8 @@ check_consistency :: proc(profile: ^Profile, target: ^store.Store, report: ^Repo
 			property_state := Property_State{base = &state, rule_fact_id = id, other_predicate = fact.object}
 			_ = store.match(target, {predicate = fact.subject}, property_sink, &property_state)
 		case profile.terms.rdf_type:
+			check_datatype_not_type(&state, id, fact)
+			if state.error != .None do break
 			if fact.object == profile.terms.owl_nothing {
 				_ = add_violation(&state, .Nothing_Instance, []store.Fact_ID{id})
 			} else if fact.object == profile.terms.irreflexive_property {
@@ -474,6 +497,26 @@ Materialize_All_Check_Result :: struct {
 // never retracts a successfully committed closure.
 materialize_all_checked :: proc(profile: ^Profile, target: ^store.Store, report: ^Report, materialization_options: Materialize_All_Options = {}, consistency_options: Consistency_Options = {}) -> Materialize_All_Check_Result {
 	result := Materialize_All_Check_Result{materialization = materialize_all(profile, target, materialization_options)}
+	if result.materialization.error != .None {
+		clear_report(report)
+		return result
+	}
+	result.consistency = check_consistency(profile, target, report, consistency_options)
+	result.consistent = result.consistency == .None && violation_count(report) == 0
+	return result
+}
+
+// Generalized_Datatype_Check_Result pairs the generalized datatype closure
+// with its false-rule report. As with the strict checked entry points, a
+// nonempty report never retracts a successfully committed closure.
+Generalized_Datatype_Check_Result :: struct {
+	materialization: Generalized_Datatype_Result,
+	consistency:    Consistency_Error_Code,
+	consistent:      bool,
+}
+
+materialize_generalized_datatypes_checked :: proc(profile: ^Profile, target: ^store.Store, report: ^Report, materialization_options: Generalized_Datatype_Options = {}, consistency_options: Consistency_Options = {}) -> Generalized_Datatype_Check_Result {
+	result := Generalized_Datatype_Check_Result{materialization = materialize_generalized_datatypes(profile, target, materialization_options)}
 	if result.materialization.error != .None {
 		clear_report(report)
 		return result
