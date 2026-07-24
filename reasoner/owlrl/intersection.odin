@@ -9,6 +9,7 @@ Intersection_Options :: struct {
 	max_rounds:      int,
 	max_derivations: int,
 	max_list_items:  int,
+	generalized_heads: bool,
 }
 
 Intersection_Error_Code :: enum {
@@ -29,13 +30,13 @@ Intersection_Result :: struct {
 	inferred_facts: int,
 }
 
-@(private) add_intersection_type :: proc(profile: ^Profile, target: ^store.Store, subject, class: term.Term_ID, remaining: int, added_count: ^int, provenance: ^Closure_Provenance = nil, rule_id: rule.Rule_ID = rule.INVALID_RULE_ID, declaration_id: store.Fact_ID = store.INVALID_FACT_ID, list: ^List = nil, supports: []store.Fact_ID = nil) -> (Intersection_Error_Code, store.Error_Code) {
+@(private) add_intersection_type :: proc(profile: ^Profile, target: ^store.Store, subject, class: term.Term_ID, remaining: int, added_count: ^int, generalized_heads: bool, provenance: ^Closure_Provenance = nil, rule_id: rule.Rule_ID = rule.INVALID_RULE_ID, declaration_id: store.Fact_ID = store.INVALID_FACT_ID, list: ^List = nil, supports: []store.Fact_ID = nil) -> (Intersection_Error_Code, store.Error_Code) {
 	if remaining >= 0 && added_count^ >= remaining do return .Rule_Error, .None
 	subject_term, subject_ok := store.get_term(target, subject)
 	predicate_term, predicate_ok := store.get_term(target, profile.terms.rdf_type)
 	class_term, class_ok := store.get_term(target, class)
 	if !subject_ok || !predicate_ok || !class_ok do return .Store_Error, .Invalid_Fact
-	if rdf.validate_triple_structure({subject_term, predicate_term, class_term}) != .None do return .None, .None
+	if !generalized_heads && rdf.validate_triple_structure({subject_term, predicate_term, class_term}) != .None do return .None, .None
 	fact := store.Fact{subject = subject, predicate = profile.terms.rdf_type, object = class}
 	if store.contains(target, fact) do return .None, .None
 	added, insert_error := store.insert(target, fact, .Inferred)
@@ -50,13 +51,13 @@ Intersection_Result :: struct {
 	return .None, .None
 }
 
-@(private) add_intersection_subclass :: proc(profile: ^Profile, target: ^store.Store, subclass, superclass: term.Term_ID, remaining: int, added_count: ^int, provenance: ^Closure_Provenance = nil, declaration_id: store.Fact_ID = store.INVALID_FACT_ID, list: ^List = nil) -> (Intersection_Error_Code, store.Error_Code) {
+@(private) add_intersection_subclass :: proc(profile: ^Profile, target: ^store.Store, subclass, superclass: term.Term_ID, remaining: int, added_count: ^int, generalized_heads: bool, provenance: ^Closure_Provenance = nil, declaration_id: store.Fact_ID = store.INVALID_FACT_ID, list: ^List = nil) -> (Intersection_Error_Code, store.Error_Code) {
 	if remaining >= 0 && added_count^ >= remaining do return .Rule_Error, .None
 	subclass_term, subclass_ok := store.get_term(target, subclass)
 	predicate_term, predicate_ok := store.get_term(target, profile.terms.subclass_of)
 	superclass_term, superclass_ok := store.get_term(target, superclass)
 	if !subclass_ok || !predicate_ok || !superclass_ok do return .Store_Error, .Invalid_Fact
-	if rdf.validate_triple_structure({subclass_term, predicate_term, superclass_term}) != .None do return .None, .None
+	if !generalized_heads && rdf.validate_triple_structure({subclass_term, predicate_term, superclass_term}) != .None do return .None, .None
 	fact := store.Fact{subject = subclass, predicate = profile.terms.subclass_of, object = superclass}
 	if store.contains(target, fact) do return .None, .None
 	added, insert_error := store.insert(target, fact, .Inferred)
@@ -80,12 +81,12 @@ Intersection_Result :: struct {
 		declaration_id, declaration, _, found := store.fact_at(target, declaration_index)
 		if !found do return added_count, .Store_Error, .None, .Invalid_Fact
 		if declaration.predicate != profile.terms.intersection_of do continue
-		if list_error = read_list(profile, target, declaration.object, &list, {max_items = options.max_list_items}); list_error != .None do return added_count, .List_Error, list_error, .None
+		if list_error = read_list(profile, target, declaration.object, &list, {max_items = options.max_list_items, generalized_heads = options.generalized_heads}); list_error != .None do return added_count, .List_Error, list_error, .None
 		if list_count(&list) == 0 do return added_count, .Empty_List, .None, .None
 		// scm-int: an intersection class is a subclass of every list member.
 		for item_index in 0..<list_count(&list) {
 			member_class, _ := list_item_at(&list, item_index)
-			phase_error, insert_error := add_intersection_subclass(profile, target, declaration.subject, member_class, remaining, &added_count, provenance, declaration_id, &list)
+			phase_error, insert_error := add_intersection_subclass(profile, target, declaration.subject, member_class, remaining, &added_count, options.generalized_heads, provenance, declaration_id, &list)
 			if phase_error != .None do return added_count, phase_error, .None, insert_error
 		}
 		first_class, _ := list_item_at(&list, 0)
@@ -109,7 +110,7 @@ Intersection_Result :: struct {
 				if append_error != nil { delete(supports); return added_count, .Store_Error, .None, .Out_Of_Memory }
 			}
 			if !all_members { delete(supports); continue }
-			phase_error, insert_error := add_intersection_type(profile, target, candidate.subject, declaration.subject, remaining, &added_count, provenance, OWL_RL_CLS_INT1, declaration_id, &list, supports[:])
+			phase_error, insert_error := add_intersection_type(profile, target, candidate.subject, declaration.subject, remaining, &added_count, options.generalized_heads, provenance, OWL_RL_CLS_INT1, declaration_id, &list, supports[:])
 			delete(supports)
 			if phase_error != .None do return added_count, phase_error, .None, insert_error
 		}
@@ -120,7 +121,7 @@ Intersection_Result :: struct {
 			if candidate.predicate != profile.terms.rdf_type || candidate.object != declaration.subject do continue
 			for item_index in 0..<list_count(&list) {
 				member_class, _ := list_item_at(&list, item_index)
-				phase_error, insert_error := add_intersection_type(profile, target, candidate.subject, member_class, remaining, &added_count, provenance, OWL_RL_CLS_INT2, declaration_id, &list, []store.Fact_ID{candidate_id})
+				phase_error, insert_error := add_intersection_type(profile, target, candidate.subject, member_class, remaining, &added_count, options.generalized_heads, provenance, OWL_RL_CLS_INT2, declaration_id, &list, []store.Fact_ID{candidate_id})
 				if phase_error != .None do return added_count, phase_error, .None, insert_error
 			}
 		}
@@ -150,7 +151,7 @@ materialize_intersection :: proc(profile: ^Profile, target: ^store.Store, option
 		if remaining >= 0 do static_limit = remaining
 		temporary: rule.Materializer
 		rule.init(&temporary)
-		static := rule.materialize(&temporary, &work, profile.rules[:], {max_derivations = static_limit})
+		static := rule.materialize(&temporary, &work, profile.rules[:], {max_derivations = static_limit, generalized_heads = options.generalized_heads})
 		rule.destroy(&temporary)
 		if static.error != .None { result.error = .Rule_Error; result.rule_error = static.error; result.store_error = static.store_error; return result }
 		result.inferred_facts += static.inferred_facts

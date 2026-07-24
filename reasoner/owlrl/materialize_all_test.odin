@@ -133,6 +133,65 @@ test_materialize_all_reaches_one_fixpoint_across_every_supported_list_phase :: p
 }
 
 @(test)
+test_materialize_all_generalized_heads_reaches_every_dynamic_list_phase :: proc(t: ^testing.T) {
+	target: store.Store
+	testing.expect_value(t, store.init(&target), store.Error_Code.None)
+	defer store.destroy(&target)
+	profile: Profile
+	profile_error, store_error := init(&profile, &target)
+	testing.expect_value(t, profile_error, Error_Code.None)
+	testing.expect_value(t, store_error, store.Error_Code.None)
+	defer destroy(&profile)
+
+	class := rdf.iri("urn:GeneralizedClass")
+	left, right := rdf.literal("left"), rdf.literal("right")
+	one_head, one_tail := rdf.blank_node("generalized-one", rdf.Blank_Node_Scope(39)), rdf.blank_node("generalized-one-tail", rdf.Blank_Node_Scope(39))
+	forward, reverse, next, chain, source, endpoint := rdf.iri("urn:forward"), rdf.iri("urn:reverse"), rdf.iri("urn:next"), rdf.iri("urn:chain"), rdf.iri("urn:source"), rdf.iri("urn:endpoint")
+	chain_head, chain_tail := rdf.blank_node("generalized-chain", rdf.Blank_Node_Scope(39)), rdf.blank_node("generalized-chain-tail", rdf.Blank_Node_Scope(39))
+
+	add_all_fact(t, &target, {class, rdf.iri(OWL_ONE_OF), one_head})
+	add_all_fact(t, &target, {one_head, rdf.iri(RDF_FIRST), left})
+	add_all_fact(t, &target, {one_head, rdf.iri(RDF_REST), one_tail})
+	add_all_fact(t, &target, {one_tail, rdf.iri(RDF_FIRST), right})
+	add_all_fact(t, &target, {one_tail, rdf.iri(RDF_REST), rdf.iri(RDF_NIL)})
+	add_all_fact(t, &target, {class, rdf.iri(OWL_HAS_KEY), rdf.iri(RDF_NIL)})
+	add_all_fact(t, &target, {forward, rdf.iri(OWL_INVERSE_OF), reverse})
+	add_all_fact(t, &target, {source, forward, left})
+	add_all_fact(t, &target, {source, next, endpoint})
+	add_all_fact(t, &target, {chain, rdf.iri(OWL_PROPERTY_CHAIN_AXIOM), chain_head})
+	add_all_fact(t, &target, {chain_head, rdf.iri(RDF_FIRST), reverse})
+	add_all_fact(t, &target, {chain_head, rdf.iri(RDF_REST), chain_tail})
+	add_all_fact(t, &target, {chain_tail, rdf.iri(RDF_FIRST), next})
+	add_all_fact(t, &target, {chain_tail, rdf.iri(RDF_REST), rdf.iri(RDF_NIL)})
+
+	strict := materialize_all(&profile, &target, {max_list_items = 4, max_path_states = 4})
+	testing.expect_value(t, strict.error, Materialize_All_Error_Code.None)
+	testing.expect(t, !has_all_fact(&target, {left, rdf.iri(rdfs.RDF_TYPE), class}))
+	testing.expect(t, !has_all_fact(&target, {left, chain, endpoint}))
+	testing.expect(t, !has_all_fact(&target, {left, rdf.iri(OWL_SAME_AS), right}))
+
+	generalized := materialize_all(&profile, &target, {max_list_items = 4, max_path_states = 4, generalized_heads = true})
+	testing.expect_value(t, generalized.error, Materialize_All_Error_Code.None)
+	testing.expect_value(t, generalized.list_error, List_Error_Code.None)
+	testing.expect(t, has_all_fact(&target, {left, rdf.iri(rdfs.RDF_TYPE), class}))
+	testing.expect(t, has_all_fact(&target, {left, chain, endpoint}))
+	testing.expect(t, has_all_fact(&target, {left, rdf.iri(OWL_SAME_AS), right}))
+
+	type_fact := store.id_for_fact(&target, {subject = term.id_for(&target.dictionary, left), predicate = term.id_for(&target.dictionary, rdf.iri(rdfs.RDF_TYPE)), object = term.id_for(&target.dictionary, class)})
+	type_derivation, type_found := closure_derivation_for(&profile, type_fact)
+	testing.expect(t, type_found)
+	testing.expect_value(t, type_derivation.rule_id, OWL_RL_CLS_OO)
+	chain_fact := store.id_for_fact(&target, {subject = term.id_for(&target.dictionary, left), predicate = term.id_for(&target.dictionary, chain), object = term.id_for(&target.dictionary, endpoint)})
+	chain_derivation, chain_found := closure_derivation_for(&profile, chain_fact)
+	testing.expect(t, chain_found)
+	testing.expect_value(t, chain_derivation.rule_id, OWL_RL_PRP_SPO2)
+	key_fact := store.id_for_fact(&target, {subject = term.id_for(&target.dictionary, left), predicate = term.id_for(&target.dictionary, rdf.iri(OWL_SAME_AS)), object = term.id_for(&target.dictionary, right)})
+	key_derivation, key_found := closure_derivation_for(&profile, key_fact)
+	testing.expect(t, key_found)
+	testing.expect_value(t, key_derivation.rule_id, OWL_RL_PRP_KEY)
+}
+
+@(test)
 test_materialize_all_retains_zero_premise_annotation_axiom_provenance :: proc(t: ^testing.T) {
 	target: store.Store
 	testing.expect_value(t, store.init(&target), store.Error_Code.None)

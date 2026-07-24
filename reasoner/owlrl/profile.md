@@ -74,7 +74,7 @@ ninety-six RDFS/OWL vocabulary terms as one store batch before building rules.
 ## Complete supported closure
 
 `materialize_all` is the public entry point when an application needs every
-currently supported entailment family. It alternates the static ninety-eight-rule
+currently supported entailment family. It alternates the static one-hundred-rule
 RDFS/OWL table with `owl:oneOf`, `owl:intersectionOf`, `owl:unionOf`,
 `owl:propertyChainAxiom`, and `owl:hasKey` expansion until a joint fixpoint. It uses one cloned
 working store and commits inferred facts only after success: any static-rule,
@@ -91,6 +91,8 @@ phases; `max_list_items` applies to every decoded collection, and
 | `OWL-RL-CLS-UNI` (152) | Member-class instance → enclosing union instance |
 | `OWL-RL-PRP-SPO2` (153) | Complete property-list path → declared chain property |
 | `OWL-RL-PRP-KEY` (157) | Matching every property in an `owl:hasKey` RDF list identifies two class instances |
+| `OWL-RL-SCM-INT` (165) | Intersection class → every listed member class |
+| `OWL-RL-SCM-UNI` (166) | Every listed member class → union class |
 
 The focused `materialize`, `materialize_one_of`, `materialize_intersection`,
 `materialize_union`, and `materialize_property_chains` entry points remain for
@@ -104,18 +106,20 @@ closure provenance intact. The focused dynamic entry points still expose only
 inferred origin, so the legacy `Materializer` is cleared after a successful
 `materialize_all` rather than presenting stale partial evidence.
 
-The strict RDF triple store cannot retain a literal subject. Consequently, an
+By default, the strict RDF triple store cannot retain a literal subject. Consequently, an
 inverse or symmetric rule match with a literal in the object position has an
 unrepresentable reverse head and is omitted, just as RDFS range omits a formal
 literal-subject conclusion. The `allValuesFrom` conclusion has the same boundary
 when its property object is a literal. Other literal-object property assertions,
 including `hasValue`, remain available to the non-reversing rules.
 
-`materialize_generalized` is the explicit W3C-oriented static path for callers
-that need generalized-RDF conclusions. It retains literal-subject heads while
-keeping asserted input strict RDF. This makes the datatype rule heads
-representable; its dynamic datatype phase is introduced separately, so the
-method alone is not a complete OWL 2 RL conformance claim.
+Set `Materialize_All_Options.generalized_heads = true` for the W3C-oriented
+complete supported closure: it retains generalized-RDF heads through the static
+table and every dynamic list phase. Its list decoder accepts duplicate
+`rdf:first`/`rdf:rest` values only when the completed equality closure proves
+them `owl:sameAs`; unrelated branching still fails. Asserted input remains
+strict RDF because `store.insert_triple` continues to validate RDF 1.1 terms.
+`materialize_generalized` remains the smaller static-only convenience path.
 
 `materialize_generalized_datatypes` extends that path with a transactional
 datatype phase. It alternates generalized static rules with `dt-type2`,
@@ -129,16 +133,14 @@ when a generalized literal type assertion conflicts with an exact value-space
 fact as the witness.
 
 Equality follows the W3C reflexive, symmetric, transitive, and replacement rule
-table for every strict RDF head the store can represent. A literal object cannot
-be the subject of an RDF triple, so its reflexive/symmetric equality statement
-and subject replacement are omitted; equality can still replace it in object
-position. This is a strict RDF boundary, not a claim of generalized-RDF or full
-OWL 2 RL equality support.
+table for every strict RDF head the default store can represent. In
+`generalized_heads` mode, literal-subject equality and replacement heads are
+retained across the complete supported closure. This is still not a claim of
+full OWL 2 RL datatype support.
 
-`FunctionalProperty` follows that same boundary when either value is a literal:
-the formal equality head would have a literal subject and is skipped. An
-`InverseFunctionalProperty` conclusion identifies strict RDF subjects and is
-therefore representable.
+In strict mode, `FunctionalProperty` skips equality heads with a literal
+subject, while `InverseFunctionalProperty` conclusions remain representable.
+`generalized_heads` retains those formal literal-subject equality heads.
 
 ## Consistency report
 

@@ -1,5 +1,6 @@
 package owlrl
 
+import rdf "odin-rdf:rdf"
 import store "../store"
 import term "../term"
 
@@ -41,8 +42,13 @@ Has_Key_Error_Code :: enum { None, Rule_Error, List_Error, Out_Of_Memory, Store_
 	return true, .None, .None
 }
 
-@(private) add_has_key_fact :: proc(profile: ^Profile, target: ^store.Store, subject, object: term.Term_ID, remaining: int, added_count: ^int, provenance: ^Closure_Provenance, declaration_id: store.Fact_ID, list: ^List, supports: []store.Fact_ID) -> (Has_Key_Error_Code, store.Error_Code) {
+@(private) add_has_key_fact :: proc(profile: ^Profile, target: ^store.Store, subject, object: term.Term_ID, remaining: int, added_count: ^int, generalized_heads: bool, provenance: ^Closure_Provenance, declaration_id: store.Fact_ID, list: ^List, supports: []store.Fact_ID) -> (Has_Key_Error_Code, store.Error_Code) {
 	if remaining >= 0 && added_count^ >= remaining do return .Rule_Error, .None
+	subject_term, subject_ok := store.get_term(target, subject)
+	predicate_term, predicate_ok := store.get_term(target, profile.terms.same_as)
+	object_term, object_ok := store.get_term(target, object)
+	if !subject_ok || !predicate_ok || !object_ok do return .Store_Error, .Invalid_Fact
+	if !generalized_heads && rdf.validate_triple_structure({subject_term, predicate_term, object_term}) != .None do return .None, .None
 	fact := store.Fact{subject = subject, predicate = profile.terms.same_as, object = object}
 	if store.contains(target, fact) do return .None, .None
 	added, insert_error := store.insert(target, fact, .Inferred)
@@ -59,7 +65,7 @@ Has_Key_Error_Code :: enum { None, Rule_Error, List_Error, Out_Of_Memory, Store_
 // RDF list length. A decoded empty key list intentionally matches every pair
 // of instances of the declared class, as specified by the rule's empty
 // conjunction of key-property conditions.
-@(private) emit_has_keys :: proc(profile: ^Profile, target: ^store.Store, max_list_items, remaining: int, provenance: ^Closure_Provenance) -> (added_count: int, error: Has_Key_Error_Code, list_error: List_Error_Code, store_error: store.Error_Code) {
+@(private) emit_has_keys :: proc(profile: ^Profile, target: ^store.Store, max_list_items, remaining: int, generalized_heads: bool, provenance: ^Closure_Provenance) -> (added_count: int, error: Has_Key_Error_Code, list_error: List_Error_Code, store_error: store.Error_Code) {
 	list: List
 	init_list(&list)
 	defer destroy_list(&list)
@@ -67,7 +73,7 @@ Has_Key_Error_Code :: enum { None, Rule_Error, List_Error, Out_Of_Memory, Store_
 		declaration_id, declaration, _, declaration_found := store.fact_at(target, declaration_index)
 		if !declaration_found do return added_count, .Store_Error, .None, .Invalid_Fact
 		if declaration.predicate != profile.terms.has_key do continue
-		if list_error = read_list(profile, target, declaration.object, &list, {max_items = max_list_items}); list_error != .None do return added_count, .List_Error, list_error, .None
+		if list_error = read_list(profile, target, declaration.object, &list, {max_items = max_list_items, generalized_heads = generalized_heads}); list_error != .None do return added_count, .List_Error, list_error, .None
 		for left_index in 0..<store.fact_count(target) {
 			left_type_id, left_type, _, left_found := store.fact_at(target, left_index)
 			if !left_found do return added_count, .Store_Error, .None, .Invalid_Fact
@@ -82,7 +88,7 @@ Has_Key_Error_Code :: enum { None, Rule_Error, List_Error, Out_Of_Memory, Store_
 				matches, match_error, match_store_error := key_values_match(profile, target, &list, left_type.subject, right_type.subject, &supports)
 				if match_error != .None { delete(supports); return added_count, match_error, .None, match_store_error }
 				if matches {
-					phase_error, insert_error := add_has_key_fact(profile, target, left_type.subject, right_type.subject, remaining, &added_count, provenance, declaration_id, &list, supports[:])
+					phase_error, insert_error := add_has_key_fact(profile, target, left_type.subject, right_type.subject, remaining, &added_count, generalized_heads, provenance, declaration_id, &list, supports[:])
 					if phase_error != .None { delete(supports); return added_count, phase_error, .None, insert_error }
 				}
 				delete(supports)

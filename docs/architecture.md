@@ -100,8 +100,11 @@ without committing a malformed-list or configured-limit prefix. Its focused
 `materialize_property_chains` counterparts remain available when an application
 intentionally wants one dynamic family only. Intersection rejects empty lists
 because this profile does not model their `owl:Thing` meaning; union accepts an
-empty list but has no finite forward conclusion; and property chains require at
-least two IRI properties with a separate per-hop path-frontier bound.
+empty list but has no finite forward conclusion; and strict property chains
+require at least two IRI properties with a separate per-hop path-frontier bound.
+`Materialize_All_Options.generalized_heads` extends the complete supported
+closure to generalized RDF, including dynamic list heads, while asserted input
+remains strict RDF.
 `materialize_all` stages an owned closure-provenance ledger beside the working
 store: every static fact copies its rule-engine support, while list facts record
 the declaration, all decoded `rdf:first`/`rdf:rest` facts, and their type or

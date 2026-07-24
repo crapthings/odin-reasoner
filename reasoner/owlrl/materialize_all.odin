@@ -7,11 +7,14 @@ import store "../store"
 // derivation and round bounds apply across static rules and every dynamic RDF
 // list phase. max_list_items applies to each decoded collection; zero disables
 // an individual bound. max_path_states applies to one property-chain frontier.
+// generalized_heads enables W3C generalized-RDF conclusions throughout the
+// static and dynamic phases; strict RDF remains the default.
 Materialize_All_Options :: struct {
 	max_rounds:      int,
 	max_derivations: int,
 	max_list_items:  int,
 	max_path_states: int,
+	generalized_heads: bool,
 }
 
 Materialize_All_Error_Code :: enum {
@@ -89,10 +92,10 @@ materialize_all :: proc(profile: ^Profile, target: ^store.Store, options: Materi
 	init_closure_provenance(&staged_provenance)
 	defer destroy_closure_provenance(&staged_provenance)
 
-	one_of_options := One_Of_Options{max_list_items = options.max_list_items}
-	intersection_options := Intersection_Options{max_list_items = options.max_list_items}
-	union_options := Union_Options{max_list_items = options.max_list_items}
-	chain_options := Property_Chain_Options{max_list_items = options.max_list_items, max_path_states = options.max_path_states}
+	one_of_options := One_Of_Options{max_list_items = options.max_list_items, generalized_heads = options.generalized_heads}
+	intersection_options := Intersection_Options{max_list_items = options.max_list_items, generalized_heads = options.generalized_heads}
+	union_options := Union_Options{max_list_items = options.max_list_items, generalized_heads = options.generalized_heads}
+	chain_options := Property_Chain_Options{max_list_items = options.max_list_items, max_path_states = options.max_path_states, generalized_heads = options.generalized_heads}
 
 	for {
 		if options.max_rounds != 0 && result.rounds >= options.max_rounds {
@@ -111,7 +114,7 @@ materialize_all :: proc(profile: ^Profile, target: ^store.Store, options: Materi
 		if remaining > 0 do static_limit = remaining
 		temporary: rule.Materializer
 		rule.init(&temporary)
-		static := rule.materialize(&temporary, &work, profile.rules[:], {max_derivations = static_limit})
+		static := rule.materialize(&temporary, &work, profile.rules[:], {max_derivations = static_limit, generalized_heads = options.generalized_heads})
 		if static.error != .None {
 			rule.destroy(&temporary)
 			result.error = static.error == .Out_Of_Memory ? .Out_Of_Memory : .Rule_Error
@@ -211,7 +214,7 @@ materialize_all :: proc(profile: ^Profile, target: ^store.Store, options: Materi
 		phase_added += chain_added
 
 		remaining = remaining_derivations(options.max_derivations, result.inferred_facts)
-		key_added, key_error, key_list_error, key_store_error := emit_has_keys(profile, &work, options.max_list_items, remaining, &staged_provenance)
+		key_added, key_error, key_list_error, key_store_error := emit_has_keys(profile, &work, options.max_list_items, remaining, options.generalized_heads, &staged_provenance)
 		if key_error != .None {
 			if key_error == .Rule_Error {
 				result.error = .Rule_Error

@@ -5,7 +5,13 @@ import term "../term"
 
 // List_Options bounds one decoded RDF collection. A zero limit disables the
 // item bound; malformed and cyclic lists still terminate deterministically.
-List_Options :: struct { max_items: int }
+// generalized_heads accepts sameAs-equivalent first/rest values produced by a
+// generalized closure while retaining strict malformed-list rejection by
+// default.
+List_Options :: struct {
+	max_items:         int,
+	generalized_heads: bool,
+}
 
 List_Error_Code :: enum {
 	None,
@@ -85,36 +91,39 @@ list_rest_fact_at :: proc(list: ^List, index: int) -> (store.Fact_ID, bool) {
 	return list.rest_facts[index], true
 }
 
-@(private) Object_State :: struct {
-	count: int,
-	value: term.Term_ID,
+@(private) objects_are_same_as :: proc(profile: ^Profile, target: ^store.Store, left, right: term.Term_ID) -> bool {
+	if left == right do return true
+	return store.contains(target, {subject = left, predicate = profile.terms.same_as, object = right})
 }
 
-@(private) object_sink :: proc(_: store.Fact_ID, fact: store.Fact, _: store.Origin, user_data: rawptr) -> bool {
-	state := cast(^Object_State)user_data
-	state.count += 1
-	state.value = fact.object
-	return state.count < 2
-}
-
-@(private) unique_object :: proc(target: ^store.Store, subject, predicate: term.Term_ID) -> (term.Term_ID, List_Error_Code) {
-	state: Object_State
-	_ = store.match(target, {subject = subject, predicate = predicate}, object_sink, &state)
-	if state.count == 0 {
+@(private) unique_object :: proc(profile: ^Profile, target: ^store.Store, subject, predicate: term.Term_ID, generalized_heads: bool) -> (term.Term_ID, List_Error_Code) {
+	found := false
+	value := term.INVALID_TERM_ID
+	for index in 0..<store.fact_count(target) {
+		_, fact, _, fact_found := store.fact_at(target, index)
+		if !fact_found do return term.INVALID_TERM_ID, .Out_Of_Memory
+		if fact.subject != subject || fact.predicate != predicate do continue
+		if !found {
+			found = true
+			value = fact.object
+			continue
+		}
+		if !generalized_heads || !objects_are_same_as(profile, target, value, fact.object) do return term.INVALID_TERM_ID, .Multiple_First
+	}
+	if !found {
 		if predicate == term.INVALID_TERM_ID do return term.INVALID_TERM_ID, .Out_Of_Memory
 		return term.INVALID_TERM_ID, .Missing_First
 	}
-	if state.count > 1 do return term.INVALID_TERM_ID, .Multiple_First
-	return state.value, .None
+	return value, .None
 }
 
-@(private) first_object :: proc(target: ^store.Store, subject: term.Term_ID, profile: ^Profile) -> (term.Term_ID, List_Error_Code) {
-	value, error := unique_object(target, subject, profile.terms.rdf_first)
+@(private) first_object :: proc(target: ^store.Store, subject: term.Term_ID, profile: ^Profile, generalized_heads: bool) -> (term.Term_ID, List_Error_Code) {
+	value, error := unique_object(profile, target, subject, profile.terms.rdf_first, generalized_heads)
 	return value, error
 }
 
-@(private) rest_object :: proc(target: ^store.Store, subject: term.Term_ID, profile: ^Profile) -> (term.Term_ID, List_Error_Code) {
-	value, error := unique_object(target, subject, profile.terms.rdf_rest)
+@(private) rest_object :: proc(target: ^store.Store, subject: term.Term_ID, profile: ^Profile, generalized_heads: bool) -> (term.Term_ID, List_Error_Code) {
+	value, error := unique_object(profile, target, subject, profile.terms.rdf_rest, generalized_heads)
 	if error == .Missing_First do error = .Missing_Rest
 	if error == .Multiple_First do error = .Multiple_Rest
 	return value, error
@@ -138,12 +147,12 @@ read_list :: proc(profile: ^Profile, target: ^store.Store, head: term.Term_ID, l
 			return .Cycle
 		}
 		seen[current] = true
-		item, first_error := first_object(target, current, profile)
+		item, first_error := first_object(target, current, profile, options.generalized_heads)
 		if first_error != .None {
 			clear_list(list)
 			return first_error
 		}
-		next, rest_error := rest_object(target, current, profile)
+		next, rest_error := rest_object(target, current, profile, options.generalized_heads)
 		if rest_error != .None {
 			clear_list(list)
 			return rest_error

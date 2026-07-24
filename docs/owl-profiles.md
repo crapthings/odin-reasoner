@@ -38,8 +38,10 @@ rules must never be presented as DL or Full support.
 The current profile uses a rule/materialization model, which matches OWL 2 RL's
 intended rule-engine use. It does **not** follow that every OWL 2 RL rule,
 datatype behavior, or RDF-Based Semantics consequence is implemented. The
-bounded seed explicitly excludes, among other areas, `owl:hasKey`, cardinality,
-datatype entailment and false rules, and several list-related false rules.
+bounded seed still does not implement every OWL 2 RL datatype mapping or
+false-rule direction. It does include documented `owl:hasKey`, cardinality,
+and RDF-list rule subsets, with explicit transactional and generalized-RDF
+boundaries in the conformance ledger.
 
 Similarly, a successful `materialize_all` result is a complete closure only for
 the documented seed and configured limits. It is not a generic ontology

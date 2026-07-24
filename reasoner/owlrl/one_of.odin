@@ -11,6 +11,7 @@ One_Of_Options :: struct {
 	max_rounds:      int,
 	max_derivations: int,
 	max_list_items:  int,
+	generalized_heads: bool,
 }
 
 One_Of_Error_Code :: enum {
@@ -45,7 +46,7 @@ One_Of_Result :: struct {
 		declaration_id, declaration, _, found := store.fact_at(target, index)
 		if !found do return added_count, .Store_Error, .None, .Invalid_Fact
 		if declaration.predicate != profile.terms.one_of do continue
-		if list_error = read_list(profile, target, declaration.object, &list, {max_items = options.max_list_items}); list_error != .None do return added_count, .List_Error, list_error, .None
+		if list_error = read_list(profile, target, declaration.object, &list, {max_items = options.max_list_items, generalized_heads = options.generalized_heads}); list_error != .None do return added_count, .List_Error, list_error, .None
 		for item_index in 0..<list_count(&list) {
 			item, item_found := list_item_at(&list, item_index)
 			if !item_found do return added_count, .Store_Error, .None, .Invalid_Fact
@@ -53,7 +54,7 @@ One_Of_Result :: struct {
 			predicate, predicate_ok := store.get_term(target, profile.terms.rdf_type)
 			object, object_ok := store.get_term(target, declaration.subject)
 			if !subject_ok || !predicate_ok || !object_ok do return added_count, .Store_Error, .None, .Invalid_Fact
-			if rdf.validate_triple_structure({subject, predicate, object}) != .None do continue
+			if !options.generalized_heads && rdf.validate_triple_structure({subject, predicate, object}) != .None do continue
 			fact := store.Fact{subject = item, predicate = profile.terms.rdf_type, object = declaration.subject}
 			if store.contains(target, fact) do continue
 			if remaining >= 0 && added_count >= remaining do return added_count, .Rule_Error, .None, .None
@@ -101,7 +102,7 @@ materialize_one_of :: proc(profile: ^Profile, target: ^store.Store, options: One
 		if remaining >= 0 do static_limit = remaining
 		temporary: rule.Materializer
 		rule.init(&temporary)
-		static := rule.materialize(&temporary, &work, profile.rules[:], {max_derivations = static_limit})
+		static := rule.materialize(&temporary, &work, profile.rules[:], {max_derivations = static_limit, generalized_heads = options.generalized_heads})
 		rule.destroy(&temporary)
 		if static.error != .None {
 			result.error = .Rule_Error

@@ -63,6 +63,9 @@ closure: it reaches one transactional fixpoint across the static profile and
 all five RDF-list families. The focused list entry points remain available for
 isolated use. Use `owlrl.materialize_all_checked` to scan that same completed
 closure for implemented OWL contradictions without retracting it.
+Set `generalized_heads = true` in `Materialize_All_Options` only when callers
+need W3C generalized-RDF inferred heads; ordinary asserted input and the
+default closure remain strict RDF.
 
 ## Why this shape
 
