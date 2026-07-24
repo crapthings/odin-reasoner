@@ -327,12 +327,12 @@ insert :: proc(store: ^Store, fact: Fact, origin: Origin) -> (added: bool, error
 	if append_error != nil do return false, .Out_Of_Memory
 	id := Fact_ID(len(store.facts))
 	store.fact_ids[fact] = id
-	if error := add_one_index(&store.by_subject, fact.subject, id); error != .None do return false, error
-	if error := add_one_index(&store.by_predicate, fact.predicate, id); error != .None do return false, error
-	if error := add_one_index(&store.by_object, fact.object, id); error != .None do return false, error
-	if error := add_two_index(&store.by_subject_predicate, {fact.subject, fact.predicate}, id); error != .None do return false, error
-	if error := add_two_index(&store.by_subject_object, {fact.subject, fact.object}, id); error != .None do return false, error
-	if error := add_two_index(&store.by_predicate_object, {fact.predicate, fact.object}, id); error != .None do return false, error
+	if index_error := add_one_index(&store.by_subject, fact.subject, id); index_error != .None do return false, index_error
+	if index_error := add_one_index(&store.by_predicate, fact.predicate, id); index_error != .None do return false, index_error
+	if index_error := add_one_index(&store.by_object, fact.object, id); index_error != .None do return false, index_error
+	if index_error := add_two_index(&store.by_subject_predicate, {fact.subject, fact.predicate}, id); index_error != .None do return false, index_error
+	if index_error := add_two_index(&store.by_subject_object, {fact.subject, fact.object}, id); index_error != .None do return false, index_error
+	if index_error := add_two_index(&store.by_predicate_object, {fact.predicate, fact.object}, id); index_error != .None do return false, index_error
 	return true, .None
 }
 

@@ -68,10 +68,10 @@ init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Erro
 	ids: [5]term.Term_ID
 	if store_error := store.intern_terms(target, values[:], ids[:]); store_error != .None do return .Store_Error, store_error
 	profile.terms = Terms{rdf_type = ids[0], subclass_of = ids[1], subproperty_of = ids[2], domain = ids[3], range = ids[4]}
-	x, y, z, s, p, o, c, c1, c2, c3, p1, p2, p3 :=
-		rule.Variable_ID(1), rule.Variable_ID(2), rule.Variable_ID(3), rule.Variable_ID(4),
-		rule.Variable_ID(5), rule.Variable_ID(6), rule.Variable_ID(7), rule.Variable_ID(8),
-		rule.Variable_ID(9), rule.Variable_ID(10), rule.Variable_ID(11), rule.Variable_ID(12), rule.Variable_ID(13)
+	x, s, p, o, c, c1, c2, c3, p1, p2, p3 :=
+		rule.Variable_ID(1), rule.Variable_ID(4), rule.Variable_ID(5), rule.Variable_ID(6),
+		rule.Variable_ID(7), rule.Variable_ID(8), rule.Variable_ID(9), rule.Variable_ID(10),
+		rule.Variable_ID(11), rule.Variable_ID(12), rule.Variable_ID(13)
 
 	set_rule(profile, 0, RDFS_SC,
 		{{rule.variable(c1), rule.constant(profile.terms.subclass_of), rule.variable(c2)}, {rule.variable(x), rule.constant(profile.terms.rdf_type), rule.variable(c1)}},
