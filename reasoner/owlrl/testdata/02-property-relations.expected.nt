@@ -1,0 +1,5 @@
+<urn:a> <urn:p1> <urn:c> .
+<urn:b> <urn:p2> <urn:a> .
+<urn:a> <urn:p2> <urn:b> .
+<urn:c> <urn:p2> <urn:a> .
+<urn:a> <urn:p3> <urn:c> .

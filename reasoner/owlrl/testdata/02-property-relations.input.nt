@@ -1,0 +1,6 @@
+<urn:p1> <http://www.w3.org/2002/07/owl#inverseOf> <urn:p2> .
+<urn:p1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#TransitiveProperty> .
+<urn:p2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#SymmetricProperty> .
+<urn:p2> <http://www.w3.org/2002/07/owl#equivalentProperty> <urn:p3> .
+<urn:a> <urn:p1> <urn:b> .
+<urn:b> <urn:p1> <urn:c> .

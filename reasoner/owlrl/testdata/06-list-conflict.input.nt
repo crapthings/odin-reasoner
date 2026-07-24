@@ -1,0 +1,5 @@
+<urn:Choice> <http://www.w3.org/2002/07/owl#oneOf> _:one .
+_:one <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <urn:x> .
+_:one <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+<urn:Choice> <http://www.w3.org/2002/07/owl#disjointWith> <urn:Incompatible> .
+<urn:x> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <urn:Incompatible> .

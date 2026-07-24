@@ -1,0 +1,5 @@
+<urn:ada> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <urn:Agent> .
+<urn:ada> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <urn:Entity> .
+<urn:ada> <urn:relatedTo> <urn:bob> .
+<urn:ada> <http://www.w3.org/2002/07/owl#sameAs> <urn:alice> .
+<urn:alice> <urn:relatedTo> <urn:bob> .

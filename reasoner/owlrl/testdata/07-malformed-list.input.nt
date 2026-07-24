@@ -1,0 +1,5 @@
+<urn:Choice> <http://www.w3.org/2002/07/owl#oneOf> _:good .
+_:good <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <urn:x> .
+_:good <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+<urn:BrokenUnion> <http://www.w3.org/2002/07/owl#unionOf> _:broken .
+_:broken <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <urn:Class> .

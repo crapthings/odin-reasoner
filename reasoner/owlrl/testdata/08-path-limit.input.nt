@@ -1,0 +1,7 @@
+<urn:chain> <http://www.w3.org/2002/07/owl#propertyChainAxiom> _:chain .
+_:chain <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <urn:p1> .
+_:chain <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:chain-tail .
+_:chain-tail <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <urn:p2> .
+_:chain-tail <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+<urn:a> <urn:p1> <urn:b> .
+<urn:x> <urn:p1> <urn:y> .
