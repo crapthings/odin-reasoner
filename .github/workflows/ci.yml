@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           repository: crapthings/odin-rdf
-          ref: 7c2ed37109860f7c68e299f50e3582d9f6304667 # OWL RL datetime literal value comparison
+          ref: b4b1b561636bf8d8d32303fd78c5ccee4fc743f1 # avoid unsound datetime identity inference
           path: _deps/odin-rdf
           persist-credentials: false
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
@@ -57,7 +57,7 @@ jobs:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           repository: crapthings/odin-rdf
-          ref: 7c2ed37109860f7c68e299f50e3582d9f6304667 # OWL RL datetime literal value comparison
+          ref: b4b1b561636bf8d8d32303fd78c5ccee4fc743f1 # avoid unsound datetime identity inference
           path: _deps/odin-rdf
           persist-credentials: false
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
