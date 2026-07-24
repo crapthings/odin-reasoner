@@ -114,11 +114,13 @@ contract.
 ## Optional SPARQL integration
 
 `adapter/sparql` is a separate package that imports `odin-sparql`; neither the
-store, rule engine, nor RDFS profile does. It copies the completed closure into
-an owned immutable `Snapshot` and exposes the public `dataset.custom_view`
-boundary. The snapshot supports only default-graph scans: `Named` and
-`Any_Named` modes return `dataset.Invalid_View` explicitly. Scan early-stop is
-successful. `Snapshot.Options.max_quads` is an optional admission bound; an
-oversized closure returns `Quad_Limit` and destroys the incomplete copy. A
-snapshot may outlive its source store, while scan terms remain borrowed until
+store, rule engine, nor RDFS profile does. `init` copies the completed closure
+into an owned immutable `Snapshot`; `adopt_store` instead transfers a finished
+Store into the Snapshot and retains its owned terms and indexes without a
+second Dataset copy. Both expose the public `dataset.custom_view` boundary and
+may outlive the source handle. The snapshot supports only default-graph scans:
+`Named` and `Any_Named` modes return `dataset.Invalid_View` explicitly. Scan
+early-stop is successful. `Snapshot.Options.max_quads` is an optional admission
+bound for the copied form; an oversized closure returns `Quad_Limit` and
+destroys the incomplete copy. Scan terms remain borrowed until
 `sparql_adapter.destroy`.

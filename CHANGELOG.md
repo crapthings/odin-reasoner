@@ -5,6 +5,11 @@ new capabilities may require a minor version and callers should pin releases.
 
 ## Unreleased
 
+## 0.3.0 - 2026-07-24
+
+- Add `adapter/sparql.adopt_store`, which transfers a finished reasoner Store
+  into an immutable, indexed SPARQL Snapshot without a second RDF Dataset copy.
+
 ## 0.2.0 - 2026-07-24
 
 - Add `adapter/sparql.indexed_view`, a borrowed default-graph SPARQL View over

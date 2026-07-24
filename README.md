@@ -11,8 +11,8 @@ A bounded, forward-chaining RDF reasoner for Odin. It builds on
 a deliberately small RDFS Core profile, and adds an explicitly documented
 OWL 2 RL seed with first-support provenance and resource limits.
 
-**Current release: `0.2.0`** — adds a borrowed indexed SPARQL View for a live
-reasoner Store alongside the existing immutable snapshot. The package remains
+**Current release: `0.3.0`** — adds a no-copy immutable SPARQL Snapshot that
+adopts a finished reasoner Store and preserves its indexes. The package remains
 pre-1.0; callers must pin a release and retain integration tests for their own
 facts and selected profiles.
 
@@ -49,7 +49,7 @@ flowchart LR
 | Static OWL profile | 48 direct OWL 2 RL hierarchy, property, schema, value, equality, functional-property, and self-restriction rules | A documented seed, not complete OWL 2 RL |
 | RDF-list materializers | `owl:oneOf`, `owl:intersectionOf`, `owl:unionOf`, and multi-property `owl:propertyChainAxiom` | Explicit list and path-frontier limits |
 | Consistency analysis | Evidence-carrying reports for implemented false rules | Reports inconsistency; does not discard a successful closure |
-| SPARQL integration | Optional immutable default-graph snapshot and borrowed indexed live View | No core dependency on `odin-sparql`; named graphs remain unsupported |
+| SPARQL integration | Optional copied or Store-adopting immutable default-graph Snapshot, plus borrowed indexed live View | No core dependency on `odin-sparql`; named graphs remain unsupported |
 
 See the [RDFS conformance ledger](reasoner/rdfs/conformance-ledger.md) and the
 [OWL profile](reasoner/owlrl/profile.md) for the exact rule surface. The

@@ -104,6 +104,61 @@ test_snapshot_quad_limit_is_explicit_and_leaves_no_partial_snapshot :: proc(t: ^
 }
 
 @(test)
+test_adopted_store_snapshot_outlives_source_handle_and_reuses_indexed_scan :: proc(t: ^testing.T) {
+	source: store.Store
+	testing.expect_value(t, store.init(&source), store.Error_Code.None)
+	add(t, &source, {rdf.iri("urn:ada"), rdf.iri("urn:knows"), rdf.iri("urn:bert")})
+	add(t, &source, {rdf.iri("urn:ada"), rdf.iri("urn:knows"), rdf.iri("urn:cora")})
+
+	snapshot: Snapshot
+	adopt_store(&snapshot, &source)
+	defer destroy(&snapshot)
+	testing.expect_value(t, store.fact_count(&source), 0)
+	store.destroy(&source)
+	testing.expect_value(t, quad_count(&snapshot), 2)
+
+	state: Stop_State
+	closure := view(&snapshot)
+	scan_error := dataset.scan(closure, {Has_Predicate = true, Predicate = rdf.iri("urn:knows")}, stop_after_one, &state)
+	testing.expect_value(t, scan_error, dataset.Error_Code.None)
+	testing.expect_value(t, state.calls, 1)
+
+	result := run(t, `SELECT ?friend WHERE { <urn:ada> <urn:knows> ?friend } ORDER BY ?friend`, closure)
+	defer engine.destroy(&result)
+	testing.expect_value(t, engine.Row_Count(&result), 2)
+	first, first_bound, first_valid := engine.Cell(&result, 0, 0)
+	second, second_bound, second_valid := engine.Cell(&result, 1, 0)
+	testing.expect(t, first_valid && first_bound && second_valid && second_bound)
+	testing.expect_value(t, first.value, "urn:bert")
+	testing.expect_value(t, second.value, "urn:cora")
+}
+
+@(test)
+test_adopted_store_snapshot_queries_materialized_rdfs_closure :: proc(t: ^testing.T) {
+	source: store.Store
+	testing.expect_value(t, store.init(&source), store.Error_Code.None)
+	profile: rdfs.Profile
+	profile_error, store_error := rdfs.init(&profile, &source)
+	testing.expect_value(t, profile_error, rdfs.Error_Code.None)
+	testing.expect_value(t, store_error, store.Error_Code.None)
+	add(t, &source, {rdf.iri("urn:Person"), rdf.iri(rdfs.RDFS_SUBCLASS), rdf.iri("urn:Agent")})
+	add(t, &source, {rdf.iri("urn:ada"), rdf.iri(rdfs.RDF_TYPE), rdf.iri("urn:Person")})
+	materialized := rdfs.materialize(&profile, &source)
+	testing.expect_value(t, materialized.error, rule.Error_Code.None)
+	rdfs.destroy(&profile)
+
+	snapshot: Snapshot
+	adopt_store(&snapshot, &source)
+	defer destroy(&snapshot)
+	result := run(t, `SELECT ?person WHERE { ?person <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <urn:Agent> }`, view(&snapshot))
+	defer engine.destroy(&result)
+	testing.expect_value(t, engine.Row_Count(&result), 1)
+	person, bound, valid := engine.Cell(&result, 0, 0)
+	testing.expect(t, valid && bound)
+	testing.expect_value(t, person.value, "urn:ada")
+}
+
+@(test)
 test_indexed_view_reuses_live_store_identity_and_match_contract :: proc(t: ^testing.T) {
 	source: store.Store
 	testing.expect_value(t, store.init(&source), store.Error_Code.None)

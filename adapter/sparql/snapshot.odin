@@ -23,17 +23,23 @@ error_message :: proc(code: Error_Code) -> string {
 	return "unknown SPARQL snapshot error"
 }
 
-// Snapshot owns an immutable default-graph copy of a reasoner closure. It may
-// outlive the source Store; values delivered through view are borrowed until
-// destroy. Named graph scans are explicitly unsupported and return Invalid_View.
+Snapshot_Storage :: enum { Empty, Copied_Quads, Adopted_Store }
+
+// Snapshot owns an immutable default-graph closure. init creates an independent
+// copied snapshot; adopt_store transfers an already materialized Store without
+// copying its terms, facts, or indexes. Values delivered through view are
+// borrowed until destroy. Named graph scans are explicitly unsupported and
+// return Invalid_View.
 Snapshot :: struct {
+	storage: Snapshot_Storage,
 	quads: [dynamic]rdf.Quad,
 	owned: [dynamic]string,
+	adopted_store: store.Store,
 }
 
 init :: proc(snapshot: ^Snapshot, source: ^store.Store, options: Options = {}) -> Error_Code {
 	if options.max_quads < 0 do return .Invalid_Option
-	snapshot^ = Snapshot{quads = make([dynamic]rdf.Quad), owned = make([dynamic]string)}
+	snapshot^ = Snapshot{storage = .Copied_Quads, quads = make([dynamic]rdf.Quad), owned = make([dynamic]string)}
 	for index in 0..<store.fact_count(source) {
 		if options.max_quads != 0 && index >= options.max_quads { destroy(snapshot); return .Quad_Limit }
 		id, _, _, found := store.fact_at(source, index)
@@ -45,14 +51,32 @@ init :: proc(snapshot: ^Snapshot, source: ^store.Store, options: Options = {}) -
 	return .None
 }
 
+// adopt_store transfers source into snapshot without a second RDF Dataset
+// allocation. After it returns, source is reset and must not be used except
+// for destroy. The caller must finish all Store mutation and materialization
+// before adoption; view exposes only read-only scans over the adopted Store.
+adopt_store :: proc(snapshot: ^Snapshot, source: ^store.Store) {
+	snapshot^ = Snapshot{storage = .Adopted_Store, adopted_store = source^}
+	source^ = {}
+}
+
 destroy :: proc(snapshot: ^Snapshot) {
-	for value in snapshot.owned do delete(value)
-	delete(snapshot.owned)
-	delete(snapshot.quads)
+	switch snapshot.storage {
+	case .Copied_Quads:
+		for value in snapshot.owned do delete(value)
+		delete(snapshot.owned)
+		delete(snapshot.quads)
+	case .Adopted_Store:
+		store.destroy(&snapshot.adopted_store)
+	case .Empty:
+	}
 	snapshot^ = {}
 }
 
-quad_count :: proc(snapshot: ^Snapshot) -> int { return len(snapshot.quads) }
+quad_count :: proc(snapshot: ^Snapshot) -> int {
+	if snapshot.storage == .Adopted_Store do return store.fact_count(&snapshot.adopted_store)
+	return len(snapshot.quads)
+}
 
 @(private) own_string :: proc(snapshot: ^Snapshot, value: string) -> (string, Error_Code) {
 	if len(value) == 0 do return "", .None
@@ -105,9 +129,10 @@ quad_count :: proc(snapshot: ^Snapshot) -> int { return len(snapshot.quads) }
 		(!pattern.Has_Object || equal_term(pattern.Object, quad.object))
 }
 
-@(private) scan :: proc(data: rawptr, pattern: dataset.Quad_Pattern, sink: dataset.Scan_Sink, sink_data: rawptr) -> dataset.Error_Code {
+@(private) snapshot_scan :: proc(data: rawptr, pattern: dataset.Quad_Pattern, sink: dataset.Scan_Sink, sink_data: rawptr) -> dataset.Error_Code {
 	if pattern.Graph_Mode != .Default do return .Invalid_View
 	snapshot := cast(^Snapshot)data
+	if snapshot.storage == .Adopted_Store do return indexed_scan(&snapshot.adopted_store, pattern, sink, sink_data)
 	for quad in snapshot.quads {
 		if matches(pattern, quad) && !sink(quad, sink_data) do break
 	}
@@ -117,7 +142,7 @@ quad_count :: proc(snapshot: ^Snapshot) -> int { return len(snapshot.quads) }
 // view returns a borrowed dataset view for the immutable default graph only.
 // Keep snapshot alive for every scan and SPARQL execution using this view.
 view :: proc(snapshot: ^Snapshot) -> dataset.View {
-	return dataset.custom_view(scan, snapshot)
+	return dataset.custom_view(snapshot_scan, snapshot)
 }
 
 // indexed_view exposes a borrowed, default-graph View directly over a live
