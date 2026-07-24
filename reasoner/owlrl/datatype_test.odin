@@ -24,10 +24,20 @@ test_generalized_datatype_materialization_derives_exact_type_equality_and_differ
 	one_integer := rdf.typed_literal("1", integer)
 	two_integer := rdf.typed_literal("2", integer)
 	name := rdf.typed_literal("  local-name  ", token)
+	date_time := "http://www.w3.org/2001/XMLSchema#dateTime"
+	date_time_stamp := "http://www.w3.org/2001/XMLSchema#dateTimeStamp"
+	time_with_z := rdf.typed_literal("2024-01-01T00:00:00Z", date_time)
+	time_with_zero_offset := rdf.typed_literal("2024-01-01T00:00:00+00:00", date_time_stamp)
+	// Equal instants with distinct offset properties are distinct XML Schema
+	// data values; OWL RL dt-eq/dt-diff use data-value identity.
+	time_with_negative_offset := rdf.typed_literal("2023-12-31T19:00:00-05:00", date_time)
 	add(t, &target, {rdf.iri("urn:s"), rdf.iri("urn:p"), one_decimal})
 	add(t, &target, {rdf.iri("urn:s"), rdf.iri("urn:p"), one_integer})
 	add(t, &target, {rdf.iri("urn:s"), rdf.iri("urn:p"), two_integer})
 	add(t, &target, {rdf.iri("urn:s"), rdf.iri("urn:p"), name})
+	add(t, &target, {rdf.iri("urn:s"), rdf.iri("urn:p"), time_with_z})
+	add(t, &target, {rdf.iri("urn:s"), rdf.iri("urn:p"), time_with_zero_offset})
+	add(t, &target, {rdf.iri("urn:s"), rdf.iri("urn:p"), time_with_negative_offset})
 
 	result := materialize_generalized_datatypes(&profile, &target)
 	testing.expect_value(t, result.error, Generalized_Datatype_Error_Code.None)
@@ -36,6 +46,9 @@ test_generalized_datatype_materialization_derives_exact_type_equality_and_differ
 	testing.expect(t, has(&target, {one_decimal, rdf.iri(OWL_SAME_AS), one_integer}))
 	testing.expect(t, has(&target, {one_decimal, rdf.iri(OWL_DIFFERENT_FROM), two_integer}))
 	testing.expect(t, has(&target, {two_integer, rdf.iri(OWL_DIFFERENT_FROM), one_decimal}))
+	testing.expect(t, has(&target, {time_with_z, rdf.iri(OWL_SAME_AS), time_with_zero_offset}))
+	testing.expect(t, has(&target, {time_with_z, rdf.iri(OWL_DIFFERENT_FROM), time_with_negative_offset}))
+	testing.expect(t, has(&target, {time_with_negative_offset, rdf.iri(OWL_DIFFERENT_FROM), time_with_z}))
 }
 
 @(test)

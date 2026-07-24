@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           repository: crapthings/odin-rdf
-          ref: c00740ef58a4d694f73de09a8a183bdb88a88eec # guard temporal datatype identity semantics
+          ref: a6ca367d008201a8d104207cff962bf636fa0ef4 # implement temporal data-value identity
           path: _deps/odin-rdf
           persist-credentials: false
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
@@ -57,7 +57,7 @@ jobs:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           repository: crapthings/odin-rdf
-          ref: c00740ef58a4d694f73de09a8a183bdb88a88eec # guard temporal datatype identity semantics
+          ref: a6ca367d008201a8d104207cff962bf636fa0ef4 # implement temporal data-value identity
           path: _deps/odin-rdf
           persist-credentials: false
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
