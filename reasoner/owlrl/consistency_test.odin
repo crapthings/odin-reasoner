@@ -46,7 +46,7 @@ test_materialize_checked_reports_each_supported_false_rule :: proc(t: ^testing.T
 	type, same_as, different_from := rdf.iri(rdfs.RDF_TYPE), rdf.iri(OWL_SAME_AS), rdf.iri(OWL_DIFFERENT_FROM)
 	a, b, u := rdf.iri("urn:a"), rdf.iri("urn:b"), rdf.iri("urn:u")
 	c1, c2, c3, c4, c5, c6, x := rdf.iri("urn:C1"), rdf.iri("urn:C2"), rdf.iri("urn:C3"), rdf.iri("urn:C4"), rdf.iri("urn:C5"), rdf.iri("urn:C6"), rdf.iri("urn:x")
-	p1, p2, p3, p4, p5, p6, s, o := rdf.iri("urn:p1"), rdf.iri("urn:p2"), rdf.iri("urn:p3"), rdf.iri("urn:p4"), rdf.iri("urn:p5"), rdf.iri("urn:p6"), rdf.iri("urn:s"), rdf.iri("urn:o")
+	p1, p2, p3, p4, p5, p6, p7, s, o := rdf.iri("urn:p1"), rdf.iri("urn:p2"), rdf.iri("urn:p3"), rdf.iri("urn:p4"), rdf.iri("urn:p5"), rdf.iri("urn:p6"), rdf.iri("urn:p7"), rdf.iri("urn:s"), rdf.iri("urn:o")
 	irreflexive, asymmetric := rdf.iri("urn:irreflexive"), rdf.iri("urn:asymmetric")
 	m, n := rdf.iri("urn:m"), rdf.iri("urn:n")
 	add_consistency_fact(t, &target, {a, same_as, b})
@@ -109,6 +109,11 @@ test_materialize_checked_reports_each_supported_false_rule :: proc(t: ^testing.T
 	add_consistency_fact(t, &target, {asymmetric, type, rdf.iri(OWL_ASYMMETRIC_PROPERTY)})
 	add_consistency_fact(t, &target, {m, asymmetric, n})
 	add_consistency_fact(t, &target, {n, asymmetric, m})
+	max_zero, cardinality_subject := rdf.iri("urn:max-zero"), rdf.iri("urn:cardinality-subject")
+	add_consistency_fact(t, &target, {max_zero, rdf.iri(OWL_MAX_CARDINALITY), rdf.typed_literal("0", XSD_NON_NEGATIVE_INTEGER)})
+	add_consistency_fact(t, &target, {max_zero, rdf.iri(OWL_ON_PROPERTY), p7})
+	add_consistency_fact(t, &target, {cardinality_subject, type, max_zero})
+	add_consistency_fact(t, &target, {cardinality_subject, p7, rdf.literal("forbidden")})
 
 	result := materialize_checked(&profile, &target, &report)
 	testing.expect_value(t, result.materialization.error, rule.Error_Code.None)
@@ -126,11 +131,13 @@ test_materialize_checked_reports_each_supported_false_rule :: proc(t: ^testing.T
 	testing.expect(t, has_kind(&report, .Disjoint_Properties))
 	testing.expect(t, has_kind(&report, .Irreflexive_Property))
 	testing.expect(t, has_kind(&report, .Asymmetric_Property))
+	testing.expect(t, has_kind(&report, .Max_Cardinality_Zero))
 	for index in 0..<violation_count(&report) {
 		violation, found := violation_at(&report, index)
 		testing.expect(t, found && (violation.kind == .Nothing_Instance || violation.support_count >= 2))
 		if found && (violation.kind == .All_Disjoint_Classes || violation.kind == .All_Disjoint_Properties) do testing.expect_value(t, violation.support_count, 4)
 		if found && violation.kind == .Negative_Property_Assertion do testing.expect_value(t, violation.support_count, 5)
+		if found && violation.kind == .Max_Cardinality_Zero do testing.expect_value(t, violation.support_count, 4)
 	}
 }
 

@@ -1,7 +1,7 @@
 # OWL 2 RL hierarchy and object-property seed profile
 
 This package is not a complete OWL 2 RL implementation. It composes the six
-documented [RDFS Core rules](../rdfs/profile.md) with exactly forty-eight direct OWL
+documented [RDFS Core rules](../rdfs/profile.md) with exactly forty-nine direct OWL
 2 RL rules from the [W3C OWL 2 RL/RDF rules](https://www.w3.org/TR/owl2-profiles/#Reasoning_in_OWL_2_RL_and_RDF_Graphs_Using_Rules):
 
 The [conformance ledger](conformance-ledger.md) maps every implemented static
@@ -49,6 +49,7 @@ and dynamic direction to local evidence and its strict-RDF/resource boundary.
 | `OWL-RL-PRP-IFP` (138) | `P rdf:type owl:InverseFunctionalProperty`, `x1 P y`, `x2 P y` → `x1 owl:sameAs x2` |
 | `OWL-RL-CLS-HAS-SELF1` (139) | `R owl:hasSelf "true"^^xsd:boolean/onProperty P`, `x rdf:type R` → `x P x` |
 | `OWL-RL-CLS-HAS-SELF2` (140) | `R owl:hasSelf "true"^^xsd:boolean/onProperty P`, `x P x` → `x rdf:type R` |
+| `OWL-RL-CLS-MAXC2` (154) | `R owl:maxCardinality "1"^^xsd:nonNegativeInteger/onProperty P`, `x rdf:type R`, `x P y1`, `x P y2` → `y1 owl:sameAs y2` when its strict RDF head is representable |
 | `OWL-RL-SCM-CLS-SUBCLASS` (141) | `C rdf:type owl:Class` → `C rdfs:subClassOf C` |
 | `OWL-RL-SCM-CLS-EQUIVALENT` (142) | `C rdf:type owl:Class` → `C owl:equivalentClass C` |
 | `OWL-RL-SCM-CLS-THING` (143) | `C rdf:type owl:Class` → `C rdfs:subClassOf owl:Thing` |
@@ -60,12 +61,12 @@ and dynamic direction to local evidence and its strict-RDF/resource boundary.
 
 The RDFS and OWL rules are passed to one semi-naive materializer, so either
 cluster can drive the other to a single bounded fixpoint. `init` reserves all
-forty-eight RDFS/OWL vocabulary terms as one store batch before building rules.
+fifty-one RDFS/OWL vocabulary terms as one store batch before building rules.
 
 ## Complete supported closure
 
 `materialize_all` is the public entry point when an application needs every
-currently supported entailment family. It alternates the static fifty-four-rule
+currently supported entailment family. It alternates the static fifty-five-rule
 RDFS/OWL table with `owl:oneOf`, `owl:intersectionOf`, `owl:unionOf`, and
 `owl:propertyChainAxiom` expansion until a joint fixpoint. It uses one cloned
 working store and commits inferred facts only after success: any static-rule,

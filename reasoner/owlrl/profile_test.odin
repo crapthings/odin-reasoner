@@ -532,6 +532,34 @@ test_functional_property_skips_literal_subject_equality_head :: proc(t: ^testing
 }
 
 @(test)
+test_max_cardinality_one_derives_representable_equality_only :: proc(t: ^testing.T) {
+	target: store.Store
+	testing.expect_value(t, store.init(&target), store.Error_Code.None)
+	defer store.destroy(&target)
+	profile: Profile
+	profile_error, store_error := init(&profile, &target)
+	testing.expect_value(t, profile_error, Error_Code.None)
+	testing.expect_value(t, store_error, store.Error_Code.None)
+	defer destroy(&profile)
+
+	restriction, property, subject := rdf.iri("urn:max-one"), rdf.iri("urn:max-one-property"), rdf.iri("urn:max-one-subject")
+	left, right := rdf.iri("urn:max-one-left"), rdf.iri("urn:max-one-right")
+	literal_left, literal_right := rdf.literal("left"), rdf.literal("right")
+	add(t, &target, {restriction, rdf.iri(OWL_MAX_CARDINALITY), rdf.typed_literal("1", XSD_NON_NEGATIVE_INTEGER)})
+	add(t, &target, {restriction, rdf.iri(OWL_ON_PROPERTY), property})
+	add(t, &target, {subject, rdf.iri(rdfs.RDF_TYPE), restriction})
+	add(t, &target, {subject, property, left})
+	add(t, &target, {subject, property, right})
+	add(t, &target, {subject, property, literal_left})
+	add(t, &target, {subject, property, literal_right})
+
+	result := materialize(&profile, &target)
+	testing.expect_value(t, result.error, rule.Error_Code.None)
+	testing.expect(t, has(&target, {left, rdf.iri(OWL_SAME_AS), right}))
+	testing.expect(t, !has(&target, {literal_left, rdf.iri(OWL_SAME_AS), literal_right}))
+}
+
+@(test)
 test_owlrl_vocabulary_batch_respects_store_term_limit :: proc(t: ^testing.T) {
 	target: store.Store
 	testing.expect_value(t, store.init(&target, {max_terms = 6}), store.Error_Code.None)

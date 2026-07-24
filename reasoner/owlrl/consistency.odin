@@ -44,6 +44,7 @@ Violation_Kind :: enum {
 	Disjoint_Properties,
 	Irreflexive_Property,
 	Asymmetric_Property,
+	Max_Cardinality_Zero,
 }
 
 // Violation stores up to five closure Fact_IDs that witness one contradiction.
@@ -305,6 +306,42 @@ violation_at :: proc(report: ^Report, index: int) -> (Violation, bool) {
 	}
 }
 
+@(private) Max_Cardinality_Zero_State :: struct {
+	base:                ^Check_State,
+	max_cardinality_id:  store.Fact_ID,
+	on_property_id:      store.Fact_ID,
+	type_id:             store.Fact_ID,
+}
+
+@(private) max_cardinality_zero_sink :: proc(id: store.Fact_ID, _: store.Fact, _: store.Origin, user_data: rawptr) -> bool {
+	state := cast(^Max_Cardinality_Zero_State)user_data
+	return add_violation(state.base, .Max_Cardinality_Zero, []store.Fact_ID{state.max_cardinality_id, state.on_property_id, state.type_id, id})
+}
+
+// check_max_cardinality_zero implements W3C OWL 2 RL/RDF cls-maxc1. The
+// conclusion is false, so it is representable without relaxing the strict RDF
+// triple boundary used by the materializer.
+@(private) check_max_cardinality_zero :: proc(state: ^Check_State, max_cardinality_id: store.Fact_ID, restriction: term.Term_ID) {
+	for on_property_index in 0..<store.fact_count(state.target) {
+		on_property_id, on_property_fact, _, on_property_found := store.fact_at(state.target, on_property_index)
+		if !on_property_found { state.error = .Out_Of_Memory; return }
+		if on_property_fact.subject != restriction || on_property_fact.predicate != state.profile.terms.on_property do continue
+		for type_index in 0..<store.fact_count(state.target) {
+			type_id, type_fact, _, type_found := store.fact_at(state.target, type_index)
+			if !type_found { state.error = .Out_Of_Memory; return }
+			if type_fact.predicate != state.profile.terms.rdf_type || type_fact.object != restriction do continue
+			match_state := Max_Cardinality_Zero_State{
+				base = state,
+				max_cardinality_id = max_cardinality_id,
+				on_property_id = on_property_id,
+				type_id = type_id,
+			}
+			_ = store.match(state.target, {subject = type_fact.subject, predicate = on_property_fact.object}, max_cardinality_zero_sink, &match_state)
+			if state.error != .None do return
+		}
+	}
+}
+
 // check_consistency scans an already materialized closure for the documented
 // OWL 2 RL false rules. It does not mutate the store. On configured report
 // limit or allocation failure, report is cleared and the error is explicit.
@@ -319,6 +356,8 @@ check_consistency :: proc(profile: ^Profile, target: ^store.Store, report: ^Repo
 		id, fact, _, found := store.fact_at(target, index)
 		if !found { state.error = .Out_Of_Memory; break }
 		switch fact.predicate {
+		case profile.terms.max_cardinality:
+			if fact.object == profile.terms.zero_cardinality do check_max_cardinality_zero(&state, id, fact.subject)
 		case profile.terms.same_as:
 			other := store.id_for_fact(target, {subject = fact.subject, predicate = profile.terms.different_from, object = fact.object})
 			if other != store.INVALID_FACT_ID do _ = add_violation(&state, .Same_As_Different_From, []store.Fact_ID{id, other})

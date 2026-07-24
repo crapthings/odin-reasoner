@@ -63,6 +63,7 @@ directions only; they do not claim OWL 1, OWL 2, or full OWL 2 RL conformance.
 | `scm-hv`, `scm-svf1`, `scm-svf2`, `scm-avf1`, `scm-avf2` / 124–128 | `profile_test:test_restriction_schema_subsumption_rules_preserve_each_direction` | both AVF directions are distinct |
 | `eq-ref` subject/predicate/object, `eq-sym`, `eq-trans`, replacement subject/predicate/object / 129–136 | `profile_test:test_same_as_closure_replaces_subject_predicate_and_object`, `test_same_as_literal_boundary_preserves_object_replacement_only` | generalized-RDF literal subjects are omitted |
 | `prp-fp`, `prp-ifp` / 137–138 | `profile_test:test_functional_properties_derive_equality_and_replacement`, `test_functional_property_skips_literal_subject_equality_head` | literal equality heads are omitted |
+| `cls-maxc2` / 154 | `profile_test:test_max_cardinality_one_derives_representable_equality_only` | literal equality heads are omitted under strict RDF |
 | `cls-hasSelf1`, `cls-hasSelf2` / 139–140 | `profile_test:test_has_self_rules_require_typed_boolean_true_and_compose_with_rdfs` | only typed `"true"^^xsd:boolean` enables the rule |
 | class schema `scm-cls` directions / 141–144 | `profile_test:test_owl_class_schema_rules_emit_all_four_consequences` | explicit four consequences |
 | object-property schema `scm-op` directions / 145–146 | `profile_test:test_object_property_schema_rules_emit_both_consequences` | explicit two consequences |
@@ -91,7 +92,8 @@ origin-only contract; `materialize_all` is the gate for dynamic provenance.
   (`owl:members`) and `eq-diff3` (`owl:distinctMembers`) for
   `owl:AllDifferent`; `cax-dw`, `cax-adc`, `cls-com`, `prp-pdw`, and
   `prp-adp`; `prp-npa1` and `prp-npa2`; `cls-nothing2`; `prp-irp`; and
-  `prp-asyp`.
+  `prp-asyp`; and `cls-maxc1` for canonical
+  `"0"^^xsd:nonNegativeInteger` cardinalities.
 - `materialize_all_checked_test:test_materialize_all_checked_reports_dynamic_list_contradictions_after_commit`
   proves a list-derived class fact participates in consistency analysis.
 - `materialize_all_checked_test:test_materialize_all_checked_keeps_dynamic_failure_transactional_and_clears_report`
@@ -105,8 +107,9 @@ origin-only contract; `materialize_all` is the gate for dynamic provenance.
 
 ## Deliberately unmapped OWL 2 RL directions
 
-Not implemented: `prp-key` / `owl:hasKey`; cardinality restrictions; datatype
-entailment and datatype false rules; schema self-axioms outside the documented
+Not implemented: `prp-key` / `owl:hasKey`; remaining qualified-cardinality
+directions (`cls-maxqc1` through `cls-maxqc4`); datatype entailment and
+datatype false rules; schema self-axioms outside the documented
 141–148 seed; generalized
 RDF literal-subject equality; and every other W3C OWL 2 RL direction not listed
 above. A term being reserved in the vocabulary is not evidence that its rule is
