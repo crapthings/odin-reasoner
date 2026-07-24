@@ -71,6 +71,54 @@ test_binding_compatibility_and_unification :: proc(t: ^testing.T) {
 }
 
 @(test)
+test_zero_body_rule_materializes_axiom_with_empty_support :: proc(t: ^testing.T) {
+	target: store.Store
+	seed_chain(t, &target)
+	defer store.destroy(&target)
+	ids := ids_for(&target)
+	body := []Triple_Template{}
+	head := []Triple_Template{{constant(ids[1]), constant(ids[4]), constant(ids[0])}}
+	zero_rule := Rule{id = Rule_ID(99), body = body, head = head}
+	materializer: Materializer
+	init(&materializer)
+	defer destroy(&materializer)
+
+	result := materialize(&materializer, &target, []Rule{zero_rule})
+	testing.expect_value(t, result.error, Error_Code.None)
+	testing.expect_value(t, result.inferred_facts, 1)
+	testing.expect(t, contains_triple(&target, {rdf.iri("urn:b"), rdf.iri("urn:p"), rdf.iri("urn:a")}))
+	derivation, found := derivation_at(&materializer, 0)
+	testing.expect(t, found)
+	testing.expect_value(t, derivation.rule_id, Rule_ID(99))
+	testing.expect_value(t, len(derivation.supports), 0)
+
+	second := materialize(&materializer, &target, []Rule{zero_rule})
+	testing.expect_value(t, second.error, Error_Code.None)
+	testing.expect_value(t, second.inferred_facts, 0)
+}
+
+@(test)
+test_zero_body_rule_derivation_limit_is_transactional :: proc(t: ^testing.T) {
+	target: store.Store
+	seed_chain(t, &target)
+	defer store.destroy(&target)
+	ids := ids_for(&target)
+	body := []Triple_Template{}
+	head_one := []Triple_Template{{constant(ids[1]), constant(ids[4]), constant(ids[0])}}
+	head_two := []Triple_Template{{constant(ids[3]), constant(ids[4]), constant(ids[0])}}
+	rules := []Rule{{id = Rule_ID(98), body = body, head = head_one}, {id = Rule_ID(99), body = body, head = head_two}}
+	materializer: Materializer
+	init(&materializer)
+	defer destroy(&materializer)
+	before := store.fact_count(&target)
+
+	result := materialize(&materializer, &target, rules, {max_derivations = 1})
+	testing.expect_value(t, result.error, Error_Code.Max_Derivations)
+	testing.expect_value(t, store.fact_count(&target), before)
+	testing.expect_value(t, derivation_count(&materializer), 0)
+}
+
+@(test)
 test_recursive_closure_terminates_and_records_first_support :: proc(t: ^testing.T) {
 	target: store.Store
 	seed_chain(t, &target)

@@ -138,7 +138,7 @@ derivation_at :: proc(materializer: ^Materializer, index: int) -> (Derivation_Vi
 
 @(private) validate_rules :: proc(target: ^store.Store, rules: []Rule) -> bool {
 	for rule in rules {
-		if rule.id == INVALID_RULE_ID || len(rule.body) == 0 || len(rule.body) > MAX_BODY_ATOMS || len(rule.head) == 0 || len(rule.head) > MAX_HEAD_ATOMS do return false
+		if rule.id == INVALID_RULE_ID || len(rule.body) > MAX_BODY_ATOMS || len(rule.head) == 0 || len(rule.head) > MAX_HEAD_ATOMS do return false
 		bound: [MAX_VARIABLES]bool
 		for atom in rule.body {
 			for slot in template_slots(atom) {
@@ -328,9 +328,10 @@ derivation_at :: proc(materializer: ^Materializer, index: int) -> (Derivation_Vi
 }
 
 // materialize computes a semi-naive closure into a bounded working snapshot,
-// then commits it only after fixpoint success. Each evaluation round requires a
-// body atom to be from the previous delta. The caller retains ownership of the
-// rules and store; materializer owns the successful first-support provenance.
+// then commits it only after fixpoint success. Empty-body rules are applied
+// once before the first delta round; every other rule requires a body atom to
+// be from the previous delta. The caller retains ownership of the rules and
+// store; materializer owns the successful first-support provenance.
 materialize :: proc(materializer: ^Materializer, target: ^store.Store, rules: []Rule, options: Options = {}) -> Result {
 	result: Result
 	if options.max_rounds < 0 || options.max_derivations < 0 { result.error = .Invalid_Option; return result }
@@ -354,11 +355,33 @@ materialize :: proc(materializer: ^Materializer, target: ^store.Store, rules: []
 	}
 
 	run := Run_State{work = &work, options = options, next_delta = &next_delta, derivations = &temporary_derivations}
+	// A zero-body rule is an RDF/OWL axiom. Execute it exactly once; its
+	// inferred facts become part of the initial delta so ordinary rules can use
+	// the axiom in the first semi-naive round.
+	for rule_index in 0..<len(rules) {
+		rule := &rules[rule_index]
+		if len(rule.body) != 0 do continue
+		state := Join_State{run = &run, rule = rule}
+		emit_heads(&state)
+		if run.error != .None {
+			result.error = run.error
+			result.store_error = run.store_error
+			return result
+		}
+	}
+	for fact_id in next_delta {
+		_, append_error := append(&delta, fact_id)
+		if append_error != nil { result.error = .Out_Of_Memory; return result }
+	}
+	delete(next_delta)
+	next_delta = make([dynamic]store.Fact_ID)
+	run.next_delta = &next_delta
 	rounds := 0
 	for len(delta) > 0 {
 		if options.max_rounds > 0 && rounds >= options.max_rounds { result.error = .Max_Rounds; return result }
 		for rule_index in 0..<len(rules) {
 			rule := &rules[rule_index]
+			if len(rule.body) == 0 do continue
 			for driver in 0..<len(rule.body) {
 				for delta_id in delta {
 					fact, found := store.fact_for(&work, delta_id)

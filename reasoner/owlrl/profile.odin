@@ -65,6 +65,7 @@ OWL_RL_CLS_MAXC2         :: rule.Rule_ID(154)
 OWL_RL_CLS_MAXQC3        :: rule.Rule_ID(155)
 OWL_RL_CLS_MAXQC4        :: rule.Rule_ID(156)
 OWL_RL_PRP_KEY           :: rule.Rule_ID(157)
+OWL_RL_PRP_AP            :: rule.Rule_ID(158)
 
 OWL_EQUIVALENT_CLASS    :: "http://www.w3.org/2002/07/owl#equivalentClass"
 OWL_EQUIVALENT_PROPERTY :: "http://www.w3.org/2002/07/owl#equivalentProperty"
@@ -108,11 +109,21 @@ OWL_HAS_KEY               :: "http://www.w3.org/2002/07/owl#hasKey"
 OWL_MAX_CARDINALITY       :: "http://www.w3.org/2002/07/owl#maxCardinality"
 OWL_MAX_QUALIFIED_CARDINALITY :: "http://www.w3.org/2002/07/owl#maxQualifiedCardinality"
 OWL_ON_CLASS              :: "http://www.w3.org/2002/07/owl#onClass"
+OWL_ANNOTATION_PROPERTY   :: "http://www.w3.org/2002/07/owl#AnnotationProperty"
+OWL_DEPRECATED            :: "http://www.w3.org/2002/07/owl#deprecated"
+OWL_VERSION_INFO          :: "http://www.w3.org/2002/07/owl#versionInfo"
+OWL_PRIOR_VERSION         :: "http://www.w3.org/2002/07/owl#priorVersion"
+OWL_BACKWARD_COMPATIBLE_WITH :: "http://www.w3.org/2002/07/owl#backwardCompatibleWith"
+OWL_INCOMPATIBLE_WITH     :: "http://www.w3.org/2002/07/owl#incompatibleWith"
 XSD_BOOLEAN               :: "http://www.w3.org/2001/XMLSchema#boolean"
 XSD_NON_NEGATIVE_INTEGER  :: "http://www.w3.org/2001/XMLSchema#nonNegativeInteger"
 RDF_FIRST                 :: "http://www.w3.org/1999/02/22-rdf-syntax-ns#first"
 RDF_REST                  :: "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest"
 RDF_NIL                   :: "http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"
+RDFS_LABEL                :: "http://www.w3.org/2000/01/rdf-schema#label"
+RDFS_COMMENT              :: "http://www.w3.org/2000/01/rdf-schema#comment"
+RDFS_SEE_ALSO             :: "http://www.w3.org/2000/01/rdf-schema#seeAlso"
+RDFS_IS_DEFINED_BY        :: "http://www.w3.org/2000/01/rdf-schema#isDefinedBy"
 
 Terms :: struct {
 	rdf_type:            term.Term_ID,
@@ -168,6 +179,8 @@ Terms :: struct {
 	one_cardinality:      term.Term_ID,
 	max_qualified_cardinality: term.Term_ID,
 	on_class:             term.Term_ID,
+	annotation_property:  term.Term_ID,
+	annotation_properties: [9]term.Term_ID,
 }
 
 Error_Code :: enum { None, Store_Error, RDFS_Error }
@@ -186,15 +199,15 @@ error_message :: proc(code: Error_Code) -> string {
 	head: [1]rule.Triple_Template,
 }
 
-// Profile owns a combined fifty-seven-rule table: RDFS Core plus fifty-one
-// documented OWL 2 RL hierarchy, object-property, schema, value, equality, and
-// functional-property rules.
+// Profile owns a combined sixty-six-rule table: RDFS Core plus sixty static
+// instances of fifty-two documented OWL 2 RL directions. prp-ap has nine
+// zero-body instances, one for each W3C built-in annotation property.
 // Do not copy it after init because Rule slices borrow embedded definitions.
 Profile :: struct {
 	rdfs:         rdfs.Profile,
 	terms:        Terms,
-	definitions:  [51]Definition,
-	rules:        [57]rule.Rule,
+	definitions:  [60]Definition,
+	rules:        [66]rule.Rule,
 	materializer: rule.Materializer,
 	closure_provenance: Closure_Provenance,
 	initialized:  bool,
@@ -207,6 +220,16 @@ Profile :: struct {
 	profile.rules[index] = {
 		id = id,
 		body = profile.definitions[definition_index].body[:1],
+		head = profile.definitions[definition_index].head[:],
+	}
+}
+
+@(private) set_zero_rule :: proc(profile: ^Profile, index: int, id: rule.Rule_ID, head: rule.Triple_Template) {
+	definition_index := index - 6
+	profile.definitions[definition_index].head = {head}
+	profile.rules[index] = {
+		id = id,
+		body = profile.definitions[definition_index].body[:0],
 		head = profile.definitions[definition_index].head[:],
 	}
 }
@@ -291,7 +314,7 @@ Profile :: struct {
 // initializing the composed RDFS profile. This prevents a term-limit error
 // from leaving a partially admitted OWL RL vocabulary batch.
 init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Error_Code) {
-	values := [53]rdf.Term{
+	values := [63]rdf.Term{
 		rdf.iri(rdfs.RDF_TYPE), rdf.iri(rdfs.RDFS_SUBCLASS), rdf.iri(rdfs.RDFS_SUBPROPERTY),
 		rdf.iri(rdfs.RDFS_DOMAIN_IRI), rdf.iri(rdfs.RDFS_RANGE_IRI),
 		rdf.iri(OWL_EQUIVALENT_CLASS), rdf.iri(OWL_EQUIVALENT_PROPERTY), rdf.iri(OWL_INVERSE_OF),
@@ -319,8 +342,11 @@ init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Erro
 		rdf.iri(OWL_DISTINCT_MEMBERS),
 		rdf.iri(OWL_MAX_CARDINALITY), rdf.typed_literal("0", XSD_NON_NEGATIVE_INTEGER), rdf.typed_literal("1", XSD_NON_NEGATIVE_INTEGER),
 		rdf.iri(OWL_MAX_QUALIFIED_CARDINALITY), rdf.iri(OWL_ON_CLASS),
+		rdf.iri(OWL_ANNOTATION_PROPERTY),
+		rdf.iri(RDFS_LABEL), rdf.iri(RDFS_COMMENT), rdf.iri(RDFS_SEE_ALSO), rdf.iri(RDFS_IS_DEFINED_BY),
+		rdf.iri(OWL_DEPRECATED), rdf.iri(OWL_VERSION_INFO), rdf.iri(OWL_PRIOR_VERSION), rdf.iri(OWL_BACKWARD_COMPATIBLE_WITH), rdf.iri(OWL_INCOMPATIBLE_WITH),
 	}
-	ids: [53]term.Term_ID
+	ids: [63]term.Term_ID
 	if store_error := store.intern_terms(target, values[:], ids[:]); store_error != .None do return .Store_Error, store_error
 	rdfs_error, nested_store_error := rdfs.init(&profile.rdfs, target)
 	if rdfs_error != .None do return .RDFS_Error, nested_store_error
@@ -378,6 +404,8 @@ init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Erro
 		one_cardinality = ids[50],
 		max_qualified_cardinality = ids[51],
 		on_class = ids[52],
+		annotation_property = ids[53],
+		annotation_properties = {ids[54], ids[55], ids[56], ids[57], ids[58], ids[59], ids[60], ids[61], ids[62]},
 	}
 	base_rules := rdfs.rule_set(&profile.rdfs)
 	for index in 0..<len(base_rules) do profile.rules[index] = base_rules[index]
@@ -537,6 +565,10 @@ init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Erro
 	set_six_rule(profile, 56, OWL_RL_CLS_MAXQC4,
 		{{rule.variable(c1), rule.constant(profile.terms.max_qualified_cardinality), rule.constant(profile.terms.one_cardinality)}, {rule.variable(c1), rule.constant(profile.terms.on_property), rule.variable(p1)}, {rule.variable(c1), rule.constant(profile.terms.on_class), rule.constant(profile.terms.owl_thing)}, {rule.variable(x), rule.constant(profile.terms.rdf_type), rule.variable(c1)}, {rule.variable(x), rule.variable(p1), rule.variable(y)}, {rule.variable(x), rule.variable(p1), rule.variable(p2)}},
 		{rule.variable(y), rule.constant(profile.terms.same_as), rule.variable(p2)})
+	for annotation_property, annotation_index in profile.terms.annotation_properties {
+		set_zero_rule(profile, 57 + annotation_index, OWL_RL_PRP_AP,
+			{rule.constant(annotation_property), rule.constant(profile.terms.rdf_type), rule.constant(profile.terms.annotation_property)})
+	}
 	rule.init(&profile.materializer)
 	init_closure_provenance(&profile.closure_provenance)
 	profile.initialized = true

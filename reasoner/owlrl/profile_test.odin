@@ -57,6 +57,36 @@ test_equivalence_rules_compose_with_rdfs_core_at_one_fixpoint :: proc(t: ^testin
 }
 
 @(test)
+test_builtin_annotation_property_axioms_have_zero_support :: proc(t: ^testing.T) {
+	target: store.Store
+	testing.expect_value(t, store.init(&target), store.Error_Code.None)
+	defer store.destroy(&target)
+	profile: Profile
+	profile_error, store_error := init(&profile, &target)
+	testing.expect_value(t, profile_error, Error_Code.None)
+	testing.expect_value(t, store_error, store.Error_Code.None)
+	defer destroy(&profile)
+
+	result := materialize(&profile, &target)
+	testing.expect_value(t, result.error, rule.Error_Code.None)
+	for annotation_property in profile.terms.annotation_properties {
+		fact := store.Fact{subject = annotation_property, predicate = profile.terms.rdf_type, object = profile.terms.annotation_property}
+		testing.expect(t, store.contains(&target, fact))
+		fact_id := store.id_for_fact(&target, fact)
+		found := false
+		for index in 0..<rule.derivation_count(&profile.materializer) {
+			derivation, derivation_found := rule.derivation_at(&profile.materializer, index)
+			if !derivation_found || derivation.fact_id != fact_id do continue
+			found = true
+			testing.expect_value(t, derivation.rule_id, OWL_RL_PRP_AP)
+			testing.expect_value(t, len(derivation.supports), 0)
+			break
+		}
+		testing.expect(t, found)
+	}
+}
+
+@(test)
 test_object_property_rules_compose_at_one_fixpoint :: proc(t: ^testing.T) {
 	target: store.Store
 	testing.expect_value(t, store.init(&target), store.Error_Code.None)

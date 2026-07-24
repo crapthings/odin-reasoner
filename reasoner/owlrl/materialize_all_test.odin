@@ -125,6 +125,27 @@ test_materialize_all_reaches_one_fixpoint_across_every_supported_list_phase :: p
 }
 
 @(test)
+test_materialize_all_retains_zero_premise_annotation_axiom_provenance :: proc(t: ^testing.T) {
+	target: store.Store
+	testing.expect_value(t, store.init(&target), store.Error_Code.None)
+	defer store.destroy(&target)
+	profile: Profile
+	profile_error, store_error := init(&profile, &target)
+	testing.expect_value(t, profile_error, Error_Code.None)
+	testing.expect_value(t, store_error, store.Error_Code.None)
+	defer destroy(&profile)
+
+	result := materialize_all(&profile, &target)
+	testing.expect_value(t, result.error, Materialize_All_Error_Code.None)
+	fact := store.Fact{subject = profile.terms.annotation_properties[0], predicate = profile.terms.rdf_type, object = profile.terms.annotation_property}
+	fact_id := store.id_for_fact(&target, fact)
+	derivation, found := closure_derivation_for(&profile, fact_id)
+	testing.expect(t, found)
+	testing.expect_value(t, derivation.rule_id, OWL_RL_PRP_AP)
+	testing.expect_value(t, len(derivation.supports), 0)
+}
+
+@(test)
 test_materialize_all_keeps_every_dynamic_phase_transactional :: proc(t: ^testing.T) {
 	target: store.Store
 	testing.expect_value(t, store.init(&target), store.Error_Code.None)
