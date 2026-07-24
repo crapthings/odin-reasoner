@@ -3,6 +3,7 @@
 [![Odin](https://img.shields.io/badge/Odin-1a1a1a?logo=odin&logoColor=white)](https://odin-lang.org/)
 [![RDFS Core](https://img.shields.io/badge/RDFS-Core-66774a)](reasoner/rdfs/profile.md)
 [![OWL 2 RL](https://img.shields.io/badge/OWL%202%20RL-bounded%20seed-7b8550)](reasoner/owlrl/profile.md)
+[![Conformance](https://img.shields.io/badge/conformance-53%20directions%20mapped-7b8550)](reasoner/owlrl/conformance-ledger.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-a3b43c.svg)](LICENSE)
 
 A bounded, forward-chaining RDF reasoner for Odin. It builds on
