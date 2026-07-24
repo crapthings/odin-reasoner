@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           repository: crapthings/odin-rdf
-          ref: a12f5acf7b302c728f9cf7036df15e4c94de3279 # OWL RL string value-space dispatch
+          ref: 4ddd470c04e0a688807509275eeeece5db02fb87 # OWL RL literal value relation dispatch
           path: _deps/odin-rdf
           persist-credentials: false
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
@@ -57,7 +57,7 @@ jobs:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           repository: crapthings/odin-rdf
-          ref: a12f5acf7b302c728f9cf7036df15e4c94de3279 # OWL RL string value-space dispatch
+          ref: 4ddd470c04e0a688807509275eeeece5db02fb87 # OWL RL literal value relation dispatch
           path: _deps/odin-rdf
           persist-credentials: false
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
