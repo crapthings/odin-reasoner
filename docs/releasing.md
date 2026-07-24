@@ -29,6 +29,11 @@ Run every profile package and its declared fixture corpus before releasing a
 profile change. Review relevant resource-limit, ownership, blank-node,
 provenance, and snapshot tests whenever their boundary changes.
 
+The repository `ci` workflow repeats the core, profile, and optional SPARQL
+adapter tests on Ubuntu, macOS, and Windows. Its Ubuntu quality job also runs
+strict checks and AddressSanitizer. A candidate release must have that workflow
+green on the exact commit; Pages deployment is documentation evidence only.
+
 ## Publish
 
 - Confirm relevant CI is green on the exact candidate commit.
