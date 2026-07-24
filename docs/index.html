@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth bg-olive-50">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>odin-reasoner — Bounded RDF reasoning for Odin</title>
+  <meta name="description" content="A bounded, forward-chaining RDFS Core and OWL 2 RL seed reasoner for Odin, built on odin-rdf with an optional odin-sparql snapshot adapter.">
+  <meta name="keywords" content="Odin, RDF, RDFS, OWL 2 RL, reasoner, forward chaining, semantic web, linked data, odin-rdf, odin-sparql">
+  <meta name="author" content="odin-reasoner contributors">
+  <meta name="theme-color" content="#f7f8f2">
+  <link rel="canonical" href="https://crapthings.github.io/odin-reasoner/">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://crapthings.github.io/odin-reasoner/">
+  <meta property="og:title" content="odin-reasoner — Bounded RDF reasoning for Odin">
+  <meta property="og:description" content="Forward-chain over application-owned RDF with explicit bounds, transactional closure, and first-support provenance.">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="odin-reasoner — Bounded RDF reasoning for Odin">
+  <meta name="twitter:description" content="A bounded RDFS Core and OWL 2 RL seed reasoner for Odin.">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="min-h-screen overflow-x-hidden bg-olive-50 font-sans text-olive-950 antialiased selection:bg-olive-800 selection:text-olive-50">
+  <div class="pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden="true">
+    <div class="absolute left-1/2 top-0 h-[32rem] w-[70rem] -translate-x-1/2 rounded-full bg-olive-300/35 blur-3xl"></div>
+    <div class="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-lime-200/30 blur-3xl"></div>
+  </div>
+
+  <header class="sticky top-0 z-50 border-b border-olive-950/10 bg-olive-50/85 backdrop-blur-xl">
+    <nav class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8" aria-label="Primary navigation">
+      <a href="#top" class="flex items-center gap-3 rounded-lg text-sm font-semibold tracking-tight text-olive-950">
+        <span class="grid h-8 w-8 place-items-center rounded-lg border border-olive-800/20 bg-olive-800 font-mono text-xs font-bold text-olive-50">OR</span>
+        <span>odin-reasoner</span>
+      </a>
+      <div class="hidden items-center gap-7 text-sm text-olive-700 sm:flex">
+        <a href="#guarantees" class="rounded transition hover:text-olive-950">Guarantees</a>
+        <a href="#surface" class="rounded transition hover:text-olive-950">Surface</a>
+        <a href="#quickstart" class="rounded transition hover:text-olive-950">Quick start</a>
+        <a href="#ecosystem" class="rounded transition hover:text-olive-950">Ecosystem</a>
+      </div>
+      <a href="https://github.com/crapthings/odin-reasoner" class="rounded-lg border border-olive-900/15 bg-white/70 px-4 py-2 text-sm font-medium text-olive-950 shadow-sm transition hover:border-olive-700/35 hover:bg-white">View source</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="mx-auto grid max-w-7xl gap-16 px-6 pb-24 pt-20 lg:grid-cols-[1.03fr_.97fr] lg:px-8 lg:pb-32 lg:pt-28">
+      <div class="flex flex-col justify-center">
+        <div class="mb-7 flex flex-wrap gap-2">
+          <span class="rounded-full border border-olive-700/20 bg-olive-200/60 px-3 py-1 font-mono text-xs text-olive-800">RDFS Core</span>
+          <span class="rounded-full border border-lime-700/20 bg-lime-100 px-3 py-1 font-mono text-xs text-lime-800">OWL 2 RL seed</span>
+          <span class="rounded-full border border-stone-400/25 bg-white/70 px-3 py-1 font-mono text-xs text-stone-700">MIT</span>
+        </div>
+        <h1 class="max-w-4xl text-5xl font-semibold leading-[1.03] tracking-[-0.045em] text-olive-950 sm:text-6xl lg:text-7xl">
+          Reason RDF.<br>
+          <span class="text-olive-700">Keep the boundary.</span>
+        </h1>
+        <p class="mt-7 max-w-2xl text-lg leading-8 text-olive-800/75 sm:text-xl">
+          A bounded, forward-chaining reasoner for Odin. Materialize application-owned RDF through a small RDFS Core profile and an explicitly scoped OWL 2 RL seed—without inheriting a graph store or network policy.
+        </p>
+        <div class="mt-10 flex flex-col gap-3 sm:flex-row">
+          <a href="#quickstart" class="inline-flex items-center justify-center rounded-xl bg-olive-800 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-olive-900/10 transition hover:bg-olive-700">Run the example</a>
+          <a href="https://github.com/crapthings/odin-reasoner/blob/main/docs/architecture.md" class="inline-flex items-center justify-center rounded-xl border border-olive-900/15 bg-white/70 px-5 py-3 text-sm font-semibold text-olive-950 transition hover:border-olive-700/30 hover:bg-white">Read architecture</a>
+        </div>
+        <dl class="mt-12 grid max-w-xl grid-cols-3 gap-6 border-t border-olive-950/10 pt-7">
+          <div><dt class="font-mono text-2xl font-semibold text-olive-950">6</dt><dd class="mt-1 text-xs leading-5 text-olive-700/65">RDFS Core rules</dd></div>
+          <div><dt class="font-mono text-2xl font-semibold text-olive-950">48</dt><dd class="mt-1 text-xs leading-5 text-olive-700/65">Direct OWL seed rules</dd></div>
+          <div><dt class="font-mono text-2xl font-semibold text-olive-950">Bounded</dt><dd class="mt-1 text-xs leading-5 text-olive-700/65">Explicit work limits</dd></div>
+        </dl>
+      </div>
+
+      <div class="relative flex min-w-0 items-center">
+        <div class="absolute inset-0 rounded-[2.5rem] bg-gradient-to-br from-olive-400/25 via-transparent to-lime-300/20 blur-2xl sm:-inset-8"></div>
+        <div class="relative w-full min-w-0 overflow-hidden rounded-2xl border border-olive-900/20 bg-olive-950 shadow-2xl shadow-olive-950/20">
+          <div class="flex items-center justify-between border-b border-olive-50/10 px-5 py-3"><div class="flex gap-2" aria-hidden="true"><span class="h-2.5 w-2.5 rounded-full bg-stone-400"></span><span class="h-2.5 w-2.5 rounded-full bg-amber-300"></span><span class="h-2.5 w-2.5 rounded-full bg-lime-300"></span></div><span class="font-mono text-[11px] text-olive-300/60">examples/rdfs_materialize/main.odin</span></div>
+          <pre class="overflow-x-auto p-6 text-[13px] leading-7 text-olive-100 sm:p-8 sm:text-sm"><code><span class="text-lime-300">import</span> rdfs <span class="text-amber-200">"../../reasoner/rdfs"</span>
+<span class="text-lime-300">import</span> store <span class="text-amber-200">"../../reasoner/store"</span>
+
+target: store.Store
+store.init(&amp;target)
+<span class="text-lime-300">defer</span> store.destroy(&amp;target)
+
+<span class="text-olive-400/70">// Parse input through the owned-term sink.</span>
+<span class="text-olive-400/70">// Then derive a bounded RDFS closure.</span>
+profile: rdfs.Profile
+rdfs.init(&amp;profile, &amp;target)
+<span class="text-lime-300">defer</span> rdfs.destroy(&amp;profile)
+
+result := rdfs.materialize(&amp;profile, &amp;target)
+<span class="text-lime-300">if</span> result.error != .None { <span class="text-lime-300">return</span> }</code></pre>
+          <div class="border-t border-olive-50/10 bg-black/15 px-6 py-4 font-mono text-xs text-lime-300">✓ indexed matches · ✓ transactional closure · ✓ first-support provenance</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="border-y border-olive-950/10 bg-white/45"><div class="mx-auto max-w-7xl px-6 py-10 lg:px-8"><p class="text-center font-mono text-xs uppercase tracking-[0.24em] text-olive-700/65">A focused inference layer for application-owned RDF</p><div class="mt-7 grid grid-cols-2 gap-4 text-center text-sm font-medium text-olive-800/70 sm:grid-cols-5"><span>Set semantics</span><span>Forward chaining</span><span>Provenance</span><span>Strict RDF lists</span><span>No hidden I/O</span></div></div></section>
+
+    <section id="guarantees" class="mx-auto max-w-7xl px-6 py-24 lg:px-8 lg:py-32">
+      <div class="max-w-2xl"><p class="font-mono text-xs font-semibold uppercase tracking-[0.22em] text-olive-700">Designed for integration</p><h2 class="mt-4 text-3xl font-semibold tracking-tight text-olive-950 sm:text-5xl">Closure without a hidden policy.</h2><p class="mt-5 text-lg leading-8 text-olive-800/70">The core keeps the expensive and consequential choices visible: how much work is allowed, when derived facts become visible, and what evidence supports them.</p></div>
+      <div class="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <article class="rounded-2xl border border-olive-950/10 bg-white/65 p-7 shadow-sm"><span class="font-mono text-sm text-olive-700">01 / bound</span><h3 class="mt-5 text-xl font-semibold">Limits are explicit</h3><p class="mt-3 leading-7 text-olive-800/70">Terms, facts, rounds, derivations, lists, paths, and consistency reports have caller-visible limits. Nothing silently truncates.</p></article>
+        <article class="rounded-2xl border border-olive-950/10 bg-white/65 p-7 shadow-sm"><span class="font-mono text-sm text-olive-700">02 / commit</span><h3 class="mt-5 text-xl font-semibold">Closure is transactional</h3><p class="mt-3 leading-7 text-olive-800/70">Materialization works on a clone and commits inferred facts only after a successful fixpoint within configured limits.</p></article>
+        <article class="rounded-2xl border border-olive-950/10 bg-white/65 p-7 shadow-sm"><span class="font-mono text-sm text-olive-700">03 / explain</span><h3 class="mt-5 text-xl font-semibold">Supports are retained</h3><p class="mt-3 leading-7 text-olive-800/70">Each newly inferred fact retains its first rule ID and ordered supporting fact IDs for inspection and debugging.</p></article>
+        <article class="rounded-2xl border border-olive-950/10 bg-white/65 p-7 shadow-sm"><span class="font-mono text-sm text-olive-700">04 / own</span><h3 class="mt-5 text-xl font-semibold">Facts stay yours</h3><p class="mt-3 leading-7 text-olive-800/70">The API owns an in-memory, set-semantics graph; applications retain responsibility for persistence, lifetimes, and transport.</p></article>
+        <article class="rounded-2xl border border-olive-950/10 bg-white/65 p-7 shadow-sm"><span class="font-mono text-sm text-olive-700">05 / report</span><h3 class="mt-5 text-xl font-semibold">Inconsistency is evidence</h3><p class="mt-3 leading-7 text-olive-800/70">Implemented OWL false rules return an owned report of fact-ID evidence after successful closure, rather than erasing facts.</p></article>
+        <article class="rounded-2xl border border-olive-950/10 bg-white/65 p-7 shadow-sm"><span class="font-mono text-sm text-olive-700">06 / separate</span><h3 class="mt-5 text-xl font-semibold">Dependencies stay directional</h3><p class="mt-3 leading-7 text-olive-800/70">The core uses only odin-rdf. odin-sparql appears only in the optional immutable snapshot adapter.</p></article>
+      </div>
+    </section>
+
+    <section id="surface" class="border-y border-olive-950/10 bg-olive-100/65"><div class="mx-auto grid max-w-7xl gap-12 px-6 py-24 lg:grid-cols-2 lg:px-8 lg:py-28"><div><p class="font-mono text-xs font-semibold uppercase tracking-[0.22em] text-olive-700">Deliberately documented surface</p><h2 class="mt-4 text-3xl font-semibold tracking-tight text-olive-950 sm:text-4xl">Small rules. Honest claims.</h2><p class="mt-6 max-w-xl text-lg leading-8 text-olive-800/70">RDFS Core is exactly six rules. The OWL profile is an explicit 48-rule static seed supplemented by four list-dependent paths. The linked ledgers define the real product boundary.</p><a href="https://github.com/crapthings/odin-reasoner/blob/main/reasoner/owlrl/profile.md" class="mt-8 inline-flex text-sm font-semibold text-olive-800 transition hover:text-olive-600">Read the OWL profile →</a></div><div class="grid gap-4 sm:grid-cols-2"><div class="rounded-2xl border border-olive-700/20 bg-white/70 p-6"><p class="font-mono text-xs uppercase tracking-wider text-olive-700">Included</p><ul class="mt-5 space-y-3 text-sm leading-6 text-olive-900/80"><li>RDFS subclass, subproperty, domain, range, transitivity</li><li>OWL hierarchy, property, schema, value, equality, and functional rules</li><li>`oneOf`, intersection, union, and property-chain list materializers</li><li>First-support provenance and selected inconsistency reports</li></ul></div><div class="rounded-2xl border border-olive-950/10 bg-olive-50/60 p-6"><p class="font-mono text-xs uppercase tracking-wider text-olive-700/65">Deliberately separate</p><ul class="mt-5 space-y-3 text-sm leading-6 text-olive-800/70"><li>Complete RDFS or OWL 2 RL conformance</li><li>Named graphs and RDF datasets</li><li>Persistent storage and transactions</li><li>Network loading, endpoints, or automatic I/O</li><li>Core dependence on SPARQL</li></ul></div></div></div></section>
+
+    <section id="quickstart" class="mx-auto max-w-7xl px-6 py-24 lg:px-8 lg:py-32"><div class="grid gap-14 lg:grid-cols-[.78fr_1.22fr]"><div><p class="font-mono text-xs font-semibold uppercase tracking-[0.22em] text-olive-700">Quick start</p><h2 class="mt-4 text-3xl font-semibold tracking-tight text-olive-950 sm:text-4xl">Supply facts. Reach a fixpoint.</h2><p class="mt-5 leading-7 text-olive-800/70">Point Odin's `odin-rdf` collection at the sibling RDF checkout. The end-to-end example reads a Turtle file, materializes RDFS Core, and prints asserted and inferred facts.</p><div class="mt-8 flex flex-wrap gap-3"><a href="https://github.com/crapthings/odin-reasoner/blob/main/examples/rdfs_materialize/main.odin" class="rounded-lg bg-olive-800 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-olive-700">Open example</a><a href="https://github.com/crapthings/odin-reasoner/tree/main/examples" class="rounded-lg border border-olive-900/15 bg-white/60 px-4 py-2.5 text-sm font-semibold text-olive-950 transition hover:bg-white">Browse examples</a></div></div><div class="min-w-0 overflow-hidden rounded-2xl border border-olive-900/20 bg-olive-950 shadow-xl shadow-olive-950/10"><div class="border-b border-olive-50/10 px-5 py-3 font-mono text-xs text-olive-300/60">terminal</div><pre class="overflow-x-auto p-6 font-mono text-sm leading-7 text-olive-100"><code><span class="text-olive-300/70"># materialize RDFS Core from Turtle</span>
+<span class="text-amber-200">odin run</span> examples/rdfs_materialize \
+  -collection:odin-rdf=../odin-rdf \
+  -- example.ttl
+
+<span class="text-olive-300/70"># validate the core</span>
+<span class="text-amber-200">odin check</span> reasoner -no-entry-point \
+  -collection:odin-rdf=../odin-rdf
+<span class="text-amber-200">odin test</span> reasoner \
+  -collection:odin-rdf=../odin-rdf
+
+<span class="text-olive-300/70"># optional closure snapshot for odin-sparql</span>
+<span class="text-amber-200">odin test</span> adapter/sparql \
+  -collection:odin-rdf=../odin-rdf \
+  -collection:odin-sparql=../odin-sparql</code></pre></div></div></section>
+
+    <section id="ecosystem" class="border-y border-olive-950/10 bg-white/45"><div class="mx-auto max-w-7xl px-6 py-24 lg:px-8 lg:py-28"><div class="max-w-2xl"><p class="font-mono text-xs font-semibold uppercase tracking-[0.22em] text-olive-700">One RDF toolchain, distinct responsibilities</p><h2 class="mt-4 text-3xl font-semibold tracking-tight text-olive-950 sm:text-4xl">Start with terms. Add closure. Query the snapshot.</h2><p class="mt-5 text-lg leading-8 text-olive-800/70">The three repositories are deliberately composable. The reasoner is a middle layer: it does not replace RDF I/O or become a SPARQL engine.</p></div><div class="mt-12 grid gap-5 md:grid-cols-3"><a href="https://github.com/crapthings/odin-rdf" class="rounded-2xl border border-olive-950/10 bg-white/65 p-7 shadow-sm transition hover:-translate-y-0.5 hover:border-olive-700/25 hover:bg-white"><p class="font-mono text-sm text-olive-700">01 / odin-rdf</p><p class="mt-4 text-2xl font-semibold">RDF 1.1 I/O</p><p class="mt-2 text-sm leading-6 text-olive-700/65">Terms, Turtle, N-Triples, N-Quads, and streaming-first parsers and writers.</p></a><a href="https://github.com/crapthings/odin-reasoner" class="rounded-2xl border border-olive-700/30 bg-olive-100/75 p-7 shadow-sm transition hover:-translate-y-0.5 hover:bg-white"><p class="font-mono text-sm text-olive-700">02 / odin-reasoner</p><p class="mt-4 text-2xl font-semibold">Bounded closure</p><p class="mt-2 text-sm leading-6 text-olive-700/65">Indexed facts, forward chaining, provenance, and limited RDFS / OWL inference.</p></a><a href="https://github.com/crapthings/odin-sparql" class="rounded-2xl border border-olive-950/10 bg-white/65 p-7 shadow-sm transition hover:-translate-y-0.5 hover:border-olive-700/25 hover:bg-white"><p class="font-mono text-sm text-olive-700">03 / odin-sparql</p><p class="mt-4 text-2xl font-semibold">SPARQL 1.1 Query</p><p class="mt-2 text-sm leading-6 text-olive-700/65">A bounded, dataset-agnostic query engine over the optional immutable closure snapshot.</p></a></div></div></section>
+
+    <section class="mx-auto max-w-7xl px-6 py-24 lg:px-8 lg:py-32"><div class="relative overflow-hidden rounded-3xl border border-olive-700/20 bg-gradient-to-br from-olive-200 via-white/60 to-lime-100 px-7 py-12 shadow-sm sm:px-12 lg:flex lg:items-center lg:justify-between lg:px-16 lg:py-16"><div class="relative max-w-2xl"><p class="font-mono text-xs font-semibold uppercase tracking-[0.22em] text-olive-700">Inspect the ledger</p><h2 class="mt-4 text-3xl font-semibold tracking-tight text-olive-950 sm:text-4xl">Use the inference you can name.</h2><p class="mt-5 text-lg leading-8 text-olive-800/70">Read the exact RDFS and OWL rule profiles before choosing the closure your application needs.</p></div><div class="relative mt-8 flex shrink-0 flex-col gap-3 sm:flex-row lg:mt-0"><a href="https://github.com/crapthings/odin-reasoner" class="inline-flex items-center justify-center rounded-xl bg-olive-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-olive-700">Get the source</a><a href="https://github.com/crapthings/odin-reasoner/blob/main/reasoner/rdfs/conformance-ledger.md" class="inline-flex items-center justify-center rounded-xl border border-olive-900/15 bg-white/60 px-5 py-3 text-sm font-semibold text-olive-950 transition hover:bg-white">RDFS ledger</a></div></div></section>
+  </main>
+
+  <footer class="border-t border-olive-950/10"><div class="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-9 text-sm text-olive-700/65 sm:flex-row sm:items-center sm:justify-between lg:px-8"><p><span class="font-semibold text-olive-950">odin-reasoner</span> · Bounded RDF reasoning for Odin.</p><div class="flex flex-wrap gap-5"><a href="https://github.com/crapthings/odin-rdf" class="transition hover:text-olive-950">odin-rdf</a><a href="https://github.com/crapthings/odin-sparql" class="transition hover:text-olive-950">odin-sparql</a><a href="https://github.com/crapthings/odin-reasoner/blob/main/LICENSE" class="transition hover:text-olive-950">MIT License</a><a href="https://github.com/crapthings/odin-reasoner" class="transition hover:text-olive-950">GitHub</a></div></div></footer>
+</body>
+</html>

@@ -1,52 +1,111 @@
 # odin-reasoner
 
-An experimental, resource-bounded RDF forward-chaining reasoner for Odin.
+[![Odin](https://img.shields.io/badge/Odin-1a1a1a?logo=odin&logoColor=white)](https://odin-lang.org/)
+[![RDFS Core](https://img.shields.io/badge/RDFS-Core-66774a)](reasoner/rdfs/profile.md)
+[![OWL 2 RL](https://img.shields.io/badge/OWL%202%20RL-bounded%20seed-7b8550)](reasoner/owlrl/profile.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-a3b43c.svg)](LICENSE)
 
-The current implementation includes the Phase 0–4 foundation: an owned term
-dictionary, a set-semantics triple fact store with indexed pattern matching, an
-RDF parser sink that immediately interns callback values, and a bounded
-semi-naive conjunctive-rule materializer with first-support provenance, and the
-six-rule [RDFS Core profile](reasoner/rdfs/profile.md). It also has a separate,
-forty-eight-rule [OWL 2 RL hierarchy, object-property, schema, value, equality, functional-property, and self-restriction seed](reasoner/owlrl/profile.md),
-not full OWL 2 RL. It does not claim complete RDFS, OWL, RIF, named graphs, persistence,
-transactions, or network support. The optional read-only default-graph SPARQL
-integration lives in [adapter/sparql](adapter/sparql); it does not make the core
-depend on SPARQL. See the RDFS profile's
-[conformance ledger](reasoner/rdfs/conformance-ledger.md).
+A bounded, forward-chaining RDF reasoner for Odin. It builds on
+[odin-rdf](https://github.com/crapthings/odin-rdf)'s public RDF model, provides
+a deliberately small RDFS Core profile, and adds an explicitly documented
+OWL 2 RL seed with first-support provenance and resource limits.
 
-The OWL profile can also produce an owned, evidence-carrying consistency report
-after closure materialization for its implemented false rules, including class
-disjointness, complements, `owl:AllDisjointClasses`, and
-`owl:AllDisjointProperties`, and negative property assertions; an inconsistent
-closure is reported explicitly rather than silently discarded. It also detects
-`owl:AllDifferent` member lists contradicted by equality and instances of
-`owl:Nothing`.
+`odin-reasoner` is for applications that need inspectable closure over
+application-owned facts—not a hidden triple store, network client, or a claim
+of complete RDFS or OWL conformance.
 
-Its optional `materialize_one_of`, `materialize_intersection`,
-`materialize_union`, and `materialize_property_chains` paths transactionally
-materialize well-formed `owl:oneOf`, `owl:intersectionOf`, `owl:unionOf`, and
-two-or-more-property `owl:propertyChainAxiom` RDF lists under explicit resource
-limits.
-
-## Dependency direction
+## Part of the Odin RDF ecosystem
 
 ```text
-odin-reasoner --> odin-rdf
+odin-rdf  ── RDF terms, parsers, writers ──>  odin-reasoner  ── inferred snapshot ──>  odin-sparql
+                                                RDFS / bounded OWL                 optional query adapter
 ```
 
-Core packages import only the public `odin-rdf:rdf` package. A future SPARQL
-snapshot adapter will be a separate optional integration package; the core will
-not import `odin-sparql`.
+- [**odin-rdf**](https://github.com/crapthings/odin-rdf) supplies the RDF 1.1
+  terms and parsers used by the core.
+- **odin-reasoner** owns facts, indexed matching, bounded materialization, and
+  provenance.
+- [**odin-sparql**](https://github.com/crapthings/odin-sparql) is used only by
+  the optional read-only snapshot adapter in [`adapter/sparql`](adapter/sparql).
+  The core never imports it.
 
-## Build
+## Status and scope
 
-From this repository, with the adjacent `odin-rdf` checkout available:
+| Surface | Included | Boundary |
+| --- | --- | --- |
+| RDFS Core | Six rules: subclass, subproperty, domain, range, and transitivity | Not complete RDFS; no axiomatic triples or container rules |
+| Static OWL profile | 48 direct OWL 2 RL hierarchy, property, schema, value, equality, functional-property, and self-restriction rules | A documented seed, not complete OWL 2 RL |
+| RDF-list materializers | `owl:oneOf`, `owl:intersectionOf`, `owl:unionOf`, and multi-property `owl:propertyChainAxiom` | Explicit list and path-frontier limits |
+| Consistency analysis | Evidence-carrying reports for implemented false rules | Reports inconsistency; does not discard a successful closure |
+| SPARQL integration | Optional immutable default-graph snapshot adapter | No core dependency on `odin-sparql` |
+
+See the [RDFS conformance ledger](reasoner/rdfs/conformance-ledger.md) and the
+[OWL profile](reasoner/owlrl/profile.md) for the exact rule surface.
+
+## Why this shape
+
+- **Bounded by contract.** Term, lexical-byte, fact, round, derivation, list,
+  path-frontier, and violation limits return explicit errors rather than
+  silently truncating work.
+- **Closure commits as a unit.** Semi-naive materialization works on a cloned
+  store and transfers inferred facts only after a successful fixpoint.
+- **Every inferred fact has a first support.** The materializer retains the
+  rule ID and ordered supporting fact IDs for each derived fact.
+- **Storage and I/O remain yours.** One in-memory RDF graph is intentional;
+  named graphs, persistence, transactions, and networking are outside the API.
+- **Dependencies stay directional.** The core uses only `odin-rdf:rdf`; query
+  execution is an optional outer integration.
+
+## Quick start
+
+Keep an `odin-rdf` checkout next to this repository, then run the RDFS example
+against a Turtle file:
+
+```sh
+odin run examples/rdfs_materialize \
+  -collection:odin-rdf=../odin-rdf \
+  -- example.ttl
+```
+
+Check and test the core:
 
 ```sh
 odin check reasoner -no-entry-point -collection:odin-rdf=../odin-rdf
 odin test reasoner -collection:odin-rdf=../odin-rdf
+
+# Optional SPARQL snapshot integration (requires ../odin-sparql as well)
+odin test adapter/sparql \
+  -collection:odin-rdf=../odin-rdf \
+  -collection:odin-sparql=../odin-sparql
 ```
 
-The API is experimental during `0.x`. See [docs/architecture.md](docs/architecture.md)
-for ownership, fact identity, resource limits, and error behavior, and
-[ROADMAP.md](ROADMAP.md) for the staged scope.
+The example prints asserted facts, inferred facts, and one provenance record.
+
+## Repository layout
+
+```text
+reasoner/term       owned RDF-term dictionary and identity
+reasoner/store      set-semantics triples and indexed matching
+reasoner/import     parser sink that interns borrowed callback values
+reasoner/rule       bounded semi-naive rule engine and provenance
+reasoner/rdfs       six-rule RDFS Core profile and conformance ledger
+reasoner/owlrl      bounded OWL 2 RL seed, list rules, and consistency reports
+adapter/sparql      optional immutable closure snapshot for odin-sparql
+examples/           owned-fact and RDFS materialization examples
+docs/               architecture and GitHub Pages source
+```
+
+## Documentation
+
+- [Architecture](docs/architecture.md) — ownership, identity, indexes,
+  transactions, and failure behaviour.
+- [RDFS Core profile](reasoner/rdfs/profile.md) — the exact six rules and
+  exclusions.
+- [OWL profile](reasoner/owlrl/profile.md) — static and list-dependent rules,
+  limits, and consistency-report semantics.
+- [Roadmap](ROADMAP.md) — staged implementation scope.
+- [Benchmarks](benchmarks/README.md) — baseline and methodology.
+
+## License
+
+[MIT](LICENSE)
