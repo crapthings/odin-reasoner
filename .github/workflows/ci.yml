@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           repository: crapthings/odin-rdf
-          ref: ed9f4d51f393d5bf04ea92883a9fbad06c499a96 # OWL RL boolean value-space foundation
+          ref: f743d49037fa6717eaad32249104de1a34206cff # OWL RL floating value-space foundation
           path: _deps/odin-rdf
           persist-credentials: false
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
@@ -57,7 +57,7 @@ jobs:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           repository: crapthings/odin-rdf
-          ref: ed9f4d51f393d5bf04ea92883a9fbad06c499a96 # OWL RL boolean value-space foundation
+          ref: f743d49037fa6717eaad32249104de1a34206cff # OWL RL floating value-space foundation
           path: _deps/odin-rdf
           persist-credentials: false
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
