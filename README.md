@@ -40,7 +40,9 @@ odin-rdf  ── RDF terms, parsers, writers ──>  odin-reasoner  ── infe
 | SPARQL integration | Optional immutable default-graph snapshot adapter | No core dependency on `odin-sparql` |
 
 See the [RDFS conformance ledger](reasoner/rdfs/conformance-ledger.md) and the
-[OWL profile](reasoner/owlrl/profile.md) for the exact rule surface.
+[OWL profile](reasoner/owlrl/profile.md) for the exact rule surface. The
+[OWL conformance ledger](reasoner/owlrl/conformance-ledger.md) maps every
+implemented OWL direction to its local gate and declared boundary.
 
 Use `owlrl.materialize_all` when the application needs the whole supported OWL
 closure: it reaches one transactional fixpoint across the static profile and

@@ -4,6 +4,9 @@ This package is not a complete OWL 2 RL implementation. It composes the six
 documented [RDFS Core rules](../rdfs/profile.md) with exactly forty-eight direct OWL
 2 RL rules from the [W3C OWL 2 RL/RDF rules](https://www.w3.org/TR/owl2-profiles/#Reasoning_in_OWL_2_RL_and_RDF_Graphs_Using_Rules):
 
+The [conformance ledger](conformance-ledger.md) maps every implemented static
+and dynamic direction to local evidence and its strict-RDF/resource boundary.
+
 | ID | Rule |
 | --- | --- |
 | `OWL-RL-CAX-EQC1` (101) | `C1 owl:equivalentClass C2`, `x rdf:type C1` → `x rdf:type C2` |
