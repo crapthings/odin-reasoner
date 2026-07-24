@@ -5,6 +5,7 @@ import "core:strings"
 import rdf "odin-rdf:rdf"
 import dataset "odin-sparql:sparql/dataset"
 import store "../../reasoner/store"
+import term "../../reasoner/term"
 
 // Options bounds an owned closure snapshot. A zero limit disables the bound.
 Options :: struct { max_quads: int }
@@ -117,4 +118,56 @@ quad_count :: proc(snapshot: ^Snapshot) -> int { return len(snapshot.quads) }
 // Keep snapshot alive for every scan and SPARQL execution using this view.
 view :: proc(snapshot: ^Snapshot) -> dataset.View {
 	return dataset.custom_view(scan, snapshot)
+}
+
+// indexed_view exposes a borrowed, default-graph View directly over a live
+// reasoner Store. It reuses the Store's owned RDF terms and indexed match
+// operation, so it does not allocate a second closure dataset. The caller must
+// keep source alive and must not mutate it during a scan or query execution.
+// Use Snapshot when the View must outlive source or require an owned immutable
+// copy.
+indexed_view :: proc(source: ^store.Store) -> dataset.View {
+	return dataset.custom_view(indexed_scan, source)
+}
+
+@(private) Indexed_Scan_State :: struct {
+	source:    ^store.Store,
+	sink:      dataset.Scan_Sink,
+	sink_data: rawptr,
+	invalid:   bool,
+}
+
+@(private) indexed_scan_sink :: proc(id: store.Fact_ID, _: store.Fact, _: store.Origin, user_data: rawptr) -> bool {
+	state := cast(^Indexed_Scan_State)user_data
+	triple, found := store.triple_for(state.source, id)
+	if !found {
+		state.invalid = true
+		return false
+	}
+	return state.sink(rdf.default_graph_quad(triple), state.sink_data)
+}
+
+@(private) indexed_scan :: proc(data: rawptr, pattern: dataset.Quad_Pattern, sink: dataset.Scan_Sink, sink_data: rawptr) -> dataset.Error_Code {
+	if pattern.Graph_Mode != .Default do return .Invalid_View
+	source := cast(^store.Store)data
+	store_pattern: store.Pattern
+	if pattern.Has_Subject {
+		id := store.id_for_term(source, pattern.Subject)
+		if id == term.INVALID_TERM_ID do return .None
+		store_pattern.subject = id
+	}
+	if pattern.Has_Predicate {
+		id := store.id_for_term(source, pattern.Predicate)
+		if id == term.INVALID_TERM_ID do return .None
+		store_pattern.predicate = id
+	}
+	if pattern.Has_Object {
+		id := store.id_for_term(source, pattern.Object)
+		if id == term.INVALID_TERM_ID do return .None
+		store_pattern.object = id
+	}
+	state := Indexed_Scan_State{source = source, sink = sink, sink_data = sink_data}
+	result := store.match(source, store_pattern, indexed_scan_sink, &state)
+	if state.invalid || result.error != store.Error_Code.None do return .Invalid_View
+	return .None
 }

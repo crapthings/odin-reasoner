@@ -102,3 +102,60 @@ test_snapshot_quad_limit_is_explicit_and_leaves_no_partial_snapshot :: proc(t: ^
 	testing.expect_value(t, init(&snapshot, &source, {max_quads = -1}), Error_Code.Invalid_Option)
 	testing.expect_value(t, quad_count(&snapshot), 0)
 }
+
+@(test)
+test_indexed_view_reuses_live_store_identity_and_match_contract :: proc(t: ^testing.T) {
+	source: store.Store
+	testing.expect_value(t, store.init(&source), store.Error_Code.None)
+	defer store.destroy(&source)
+
+	first_scope := rdf.new_blank_node_scope()
+	second_scope := rdf.new_blank_node_scope()
+	add(t, &source, {rdf.blank_node("same", first_scope), rdf.iri("urn:p"), rdf.language_literal("value", "EN")})
+	add(t, &source, {rdf.iri("urn:other"), rdf.iri("urn:p"), rdf.iri("urn:o")})
+	add(t, &source, {rdf.iri("urn:other"), rdf.iri("urn:q"), rdf.iri("urn:o")})
+
+	live := indexed_view(&source)
+	state: Stop_State
+	error := dataset.scan(live, {Has_Predicate = true, Predicate = rdf.iri("urn:p")}, stop_after_one, &state)
+	testing.expect_value(t, error, dataset.Error_Code.None)
+	testing.expect_value(t, state.calls, 1)
+
+	matching_scope := Stop_State{}
+	matching_pattern := dataset.Quad_Pattern{Has_Subject = true, Subject = rdf.blank_node("same", first_scope)}
+	testing.expect_value(t, dataset.scan(live, matching_pattern, stop_after_one, &matching_scope), dataset.Error_Code.None)
+	testing.expect_value(t, matching_scope.calls, 1)
+	different_scope := Stop_State{}
+	different_pattern := dataset.Quad_Pattern{Has_Subject = true, Subject = rdf.blank_node("same", second_scope)}
+	testing.expect_value(t, dataset.scan(live, different_pattern, stop_after_one, &different_scope), dataset.Error_Code.None)
+	testing.expect_value(t, different_scope.calls, 0)
+
+	named_error := dataset.scan(live, {Graph_Mode = .Named, Graph = rdf.iri("urn:g")}, stop_after_one, &state)
+	any_named_error := dataset.scan(live, {Graph_Mode = .Any_Named}, stop_after_one, &state)
+	testing.expect_value(t, named_error, dataset.Error_Code.Invalid_View)
+	testing.expect_value(t, any_named_error, dataset.Error_Code.Invalid_View)
+}
+
+@(test)
+test_indexed_view_matches_snapshot_query_results_while_source_is_live :: proc(t: ^testing.T) {
+	source: store.Store
+	testing.expect_value(t, store.init(&source), store.Error_Code.None)
+	defer store.destroy(&source)
+	add(t, &source, {rdf.iri("urn:ada"), rdf.iri("urn:knows"), rdf.iri("urn:bert")})
+	add(t, &source, {rdf.iri("urn:ada"), rdf.iri("urn:knows"), rdf.iri("urn:cora")})
+
+	snapshot: Snapshot
+	testing.expect_value(t, init(&snapshot, &source), Error_Code.None)
+	defer destroy(&snapshot)
+	live_result := run(t, `SELECT ?friend WHERE { <urn:ada> <urn:knows> ?friend } ORDER BY ?friend`, indexed_view(&source))
+	defer engine.destroy(&live_result)
+	snapshot_result := run(t, `SELECT ?friend WHERE { <urn:ada> <urn:knows> ?friend } ORDER BY ?friend`, view(&snapshot))
+	defer engine.destroy(&snapshot_result)
+	testing.expect_value(t, engine.Row_Count(&live_result), engine.Row_Count(&snapshot_result))
+	for index in 0..<engine.Row_Count(&live_result) {
+		live_term, live_bound, live_ok := engine.Cell(&live_result, index, 0)
+		snapshot_term, snapshot_bound, snapshot_ok := engine.Cell(&snapshot_result, index, 0)
+		testing.expect(t, live_ok && live_bound && snapshot_ok && snapshot_bound)
+		testing.expect_value(t, live_term.value, snapshot_term.value)
+	}
+}

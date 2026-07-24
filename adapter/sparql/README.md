@@ -18,6 +18,12 @@ with `dataset.Invalid_View`, rather than silently treating a default graph as a
 named graph. A sink returning `false` stops successfully and is never mapped to
 an adapter failure.
 
+`indexed_view(&store)` is a separate, borrowed default-graph View for callers
+that keep a completed `store.Store` alive and do not mutate it during query
+execution. It reuses the store's owned terms and match indexes without making
+a second closure copy. It is deliberately **not** an immutable snapshot and
+cannot outlive the store; use `Snapshot` when source independence is required.
+
 Build with both adjacent named collections:
 
 ```sh

@@ -5,6 +5,10 @@ new capabilities may require a minor version and callers should pin releases.
 
 ## Unreleased
 
+- Add `adapter/sparql.indexed_view`, a borrowed default-graph SPARQL View over
+  a caller-kept reasoner Store. It reuses store-owned terms and indexed match
+  scans without replacing the independent immutable `Snapshot` contract.
+
 ## 0.1.0 - 2026-07-24
 
 - First public release of a bounded, forward-chaining RDF reasoner built on
