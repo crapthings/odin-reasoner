@@ -11,6 +11,10 @@ A bounded, forward-chaining RDF reasoner for Odin. It builds on
 a deliberately small RDFS Core profile, and adds an explicitly documented
 OWL 2 RL seed with first-support provenance and resource limits.
 
+**Current release: `0.1.0`** — the first public release. The package remains
+pre-1.0; callers must pin a release and retain integration tests for their own
+facts and selected profiles.
+
 `odin-reasoner` is for applications that need inspectable closure over
 application-owned facts—not a hidden triple store, network client, or a claim
 of complete RDFS or OWL conformance.
@@ -119,6 +123,8 @@ docs/               architecture and GitHub Pages source
   bounded RL seed, and the entry criteria for EL, QL/OBDA, DL, or Full work.
 - [Roadmap](ROADMAP.md) — staged implementation scope.
 - [Benchmarks](benchmarks/README.md) — baseline and methodology.
+- [Changelog](CHANGELOG.md) and [release guide](docs/releasing.md) — versioned
+  compatibility and verification expectations.
 
 ## License
 
