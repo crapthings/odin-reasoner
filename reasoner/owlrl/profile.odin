@@ -70,6 +70,10 @@ OWL_RL_DT_TYPE1          :: rule.Rule_ID(159)
 OWL_RL_DT_TYPE2          :: rule.Rule_ID(160)
 OWL_RL_DT_EQ             :: rule.Rule_ID(161)
 OWL_RL_DT_DIFF           :: rule.Rule_ID(162)
+OWL_RL_CLS_THING         :: rule.Rule_ID(163)
+OWL_RL_CLS_NOTHING1      :: rule.Rule_ID(164)
+OWL_RL_SCM_INT           :: rule.Rule_ID(165)
+OWL_RL_SCM_UNI           :: rule.Rule_ID(166)
 
 OWL_EQUIVALENT_CLASS    :: "http://www.w3.org/2002/07/owl#equivalentClass"
 OWL_EQUIVALENT_PROPERTY :: "http://www.w3.org/2002/07/owl#equivalentProperty"
@@ -206,15 +210,15 @@ error_message :: proc(code: Error_Code) -> string {
 	head: [1]rule.Triple_Template,
 }
 
-// Profile owns a combined ninety-eight-rule table: RDFS Core plus ninety-two
-// static instances of fifty-three documented OWL 2 RL directions. prp-ap has
+// Profile owns a combined one-hundred-rule table: RDFS Core plus ninety-four
+// static instances of fifty-five documented OWL 2 RL directions. prp-ap has
 // nine zero-body instances and dt-type1 has thirty-two, one per W3C resource.
 // Do not copy it after init because Rule slices borrow embedded definitions.
 Profile :: struct {
 	rdfs:         rdfs.Profile,
 	terms:        Terms,
-	definitions:  [92]Definition,
-	rules:        [98]rule.Rule,
+	definitions:  [94]Definition,
+	rules:        [100]rule.Rule,
 	materializer: rule.Materializer,
 	closure_provenance: Closure_Provenance,
 	initialized:  bool,
@@ -586,6 +590,10 @@ init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Erro
 		set_zero_rule(profile, 66 + datatype_index, OWL_RL_DT_TYPE1,
 			{rule.constant(datatype), rule.constant(profile.terms.rdf_type), rule.constant(profile.terms.rdfs_datatype)})
 	}
+	set_zero_rule(profile, 98, OWL_RL_CLS_THING,
+		{rule.constant(profile.terms.owl_thing), rule.constant(profile.terms.rdf_type), rule.constant(profile.terms.owl_class)})
+	set_zero_rule(profile, 99, OWL_RL_CLS_NOTHING1,
+		{rule.constant(profile.terms.owl_nothing), rule.constant(profile.terms.rdf_type), rule.constant(profile.terms.owl_class)})
 	rule.init(&profile.materializer)
 	init_closure_provenance(&profile.closure_provenance)
 	profile.initialized = true

@@ -49,6 +49,27 @@ Union_Result :: struct {
 	return .None, .None
 }
 
+@(private) add_union_subclass :: proc(profile: ^Profile, target: ^store.Store, subclass, superclass: term.Term_ID, remaining: int, added_count: ^int, provenance: ^Closure_Provenance = nil, declaration_id: store.Fact_ID = store.INVALID_FACT_ID, list: ^List = nil) -> (Union_Error_Code, store.Error_Code) {
+	if remaining >= 0 && added_count^ >= remaining do return .Rule_Error, .None
+	subclass_term, subclass_ok := store.get_term(target, subclass)
+	predicate_term, predicate_ok := store.get_term(target, profile.terms.subclass_of)
+	superclass_term, superclass_ok := store.get_term(target, superclass)
+	if !subclass_ok || !predicate_ok || !superclass_ok do return .Store_Error, .Invalid_Fact
+	if rdf.validate_triple_structure({subclass_term, predicate_term, superclass_term}) != .None do return .None, .None
+	fact := store.Fact{subject = subclass, predicate = profile.terms.subclass_of, object = superclass}
+	if store.contains(target, fact) do return .None, .None
+	added, insert_error := store.insert(target, fact, .Inferred)
+	if insert_error != .None do return .Store_Error, insert_error
+	if added {
+		added_count^ += 1
+		if provenance != nil {
+			fact_id := store.id_for_fact(target, fact)
+			if fact_id == store.INVALID_FACT_ID || declaration_id == store.INVALID_FACT_ID || list == nil || !append_list_derivation(provenance, fact_id, OWL_RL_SCM_UNI, declaration_id, list, nil) do return .Store_Error, .Out_Of_Memory
+		}
+	}
+	return .None, .None
+}
+
 // remaining is -1 when the global derivation limit is disabled.
 @(private) emit_union :: proc(profile: ^Profile, target: ^store.Store, options: Union_Options, remaining: int, provenance: ^Closure_Provenance = nil) -> (added_count: int, error: Union_Error_Code, list_error: List_Error_Code, store_error: store.Error_Code) {
 	list: List
@@ -59,6 +80,12 @@ Union_Result :: struct {
 		if !found do return added_count, .Store_Error, .None, .Invalid_Fact
 		if declaration.predicate != profile.terms.union_of do continue
 		if list_error = read_list(profile, target, declaration.object, &list, {max_items = options.max_list_items}); list_error != .None do return added_count, .List_Error, list_error, .None
+		// scm-uni: every list member is a subclass of the enclosing union class.
+		for item_index in 0..<list_count(&list) {
+			member_class, _ := list_item_at(&list, item_index)
+			phase_error, insert_error := add_union_subclass(profile, target, member_class, declaration.subject, remaining, &added_count, provenance, declaration_id, &list)
+			if phase_error != .None do return added_count, phase_error, .None, insert_error
+		}
 		// cls-uni: each member class entails the enclosing union class. An empty
 		// list has no members, so this finite forward rule has no conclusions.
 		for item_index in 0..<list_count(&list) {

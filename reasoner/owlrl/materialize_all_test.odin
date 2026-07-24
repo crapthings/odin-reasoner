@@ -107,10 +107,18 @@ test_materialize_all_reaches_one_fixpoint_across_every_supported_list_phase :: p
 	intersection_reverse_derivation, intersection_reverse_found := closure_derivation_for(&profile, intersection_reverse_fact)
 	testing.expect(t, intersection_reverse_found)
 	testing.expect_value(t, intersection_reverse_derivation.rule_id, OWL_RL_CLS_INT2)
+	intersection_schema_fact := store.id_for_fact(&target, {subject = term.id_for(&target.dictionary, intersection), predicate = term.id_for(&target.dictionary, rdf.iri(rdfs.RDFS_SUBCLASS)), object = term.id_for(&target.dictionary, choice)})
+	intersection_schema_derivation, intersection_schema_found := closure_derivation_for(&profile, intersection_schema_fact)
+	testing.expect(t, intersection_schema_found)
+	testing.expect_value(t, intersection_schema_derivation.rule_id, OWL_RL_SCM_INT)
 	union_fact := store.id_for_fact(&target, {subject = term.id_for(&target.dictionary, a), predicate = term.id_for(&target.dictionary, rdf.iri(rdfs.RDF_TYPE)), object = term.id_for(&target.dictionary, union_class)})
 	union_derivation, union_found := closure_derivation_for(&profile, union_fact)
 	testing.expect(t, union_found)
 	testing.expect_value(t, union_derivation.rule_id, OWL_RL_CLS_UNI)
+	union_schema_fact := store.id_for_fact(&target, {subject = term.id_for(&target.dictionary, intersection), predicate = term.id_for(&target.dictionary, rdf.iri(rdfs.RDFS_SUBCLASS)), object = term.id_for(&target.dictionary, union_class)})
+	union_schema_derivation, union_schema_found := closure_derivation_for(&profile, union_schema_fact)
+	testing.expect(t, union_schema_found)
+	testing.expect_value(t, union_schema_derivation.rule_id, OWL_RL_SCM_UNI)
 	entity_fact := store.id_for_fact(&target, {subject = term.id_for(&target.dictionary, a), predicate = term.id_for(&target.dictionary, rdf.iri(rdfs.RDF_TYPE)), object = term.id_for(&target.dictionary, entity)})
 	entity_derivation, entity_found := closure_derivation_for(&profile, entity_fact)
 	testing.expect(t, entity_found)
@@ -164,6 +172,31 @@ test_materialize_all_retains_zero_premise_datatype_axiom_provenance :: proc(t: ^
 	testing.expect(t, found)
 	testing.expect_value(t, derivation.rule_id, OWL_RL_DT_TYPE1)
 	testing.expect_value(t, len(derivation.supports), 0)
+}
+
+@(test)
+test_materialize_all_retains_zero_premise_builtin_class_axiom_provenance :: proc(t: ^testing.T) {
+	target: store.Store
+	testing.expect_value(t, store.init(&target), store.Error_Code.None)
+	defer store.destroy(&target)
+	profile: Profile
+	profile_error, store_error := init(&profile, &target)
+	testing.expect_value(t, profile_error, Error_Code.None)
+	testing.expect_value(t, store_error, store.Error_Code.None)
+	defer destroy(&profile)
+
+	result := materialize_all(&profile, &target)
+	testing.expect_value(t, result.error, Materialize_All_Error_Code.None)
+	thing_fact := store.Fact{subject = profile.terms.owl_thing, predicate = profile.terms.rdf_type, object = profile.terms.owl_class}
+	nothing_fact := store.Fact{subject = profile.terms.owl_nothing, predicate = profile.terms.rdf_type, object = profile.terms.owl_class}
+	thing_derivation, thing_found := closure_derivation_for(&profile, store.id_for_fact(&target, thing_fact))
+	nothing_derivation, nothing_found := closure_derivation_for(&profile, store.id_for_fact(&target, nothing_fact))
+	testing.expect(t, thing_found)
+	testing.expect(t, nothing_found)
+	testing.expect_value(t, thing_derivation.rule_id, OWL_RL_CLS_THING)
+	testing.expect_value(t, nothing_derivation.rule_id, OWL_RL_CLS_NOTHING1)
+	testing.expect_value(t, len(thing_derivation.supports), 0)
+	testing.expect_value(t, len(nothing_derivation.supports), 0)
 }
 
 @(test)

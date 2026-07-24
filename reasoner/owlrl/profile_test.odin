@@ -118,6 +118,44 @@ test_owl_rl_datatype_axioms_have_zero_support :: proc(t: ^testing.T) {
 }
 
 @(test)
+test_owl_rl_builtin_class_axioms_have_zero_support :: proc(t: ^testing.T) {
+	target: store.Store
+	testing.expect_value(t, store.init(&target), store.Error_Code.None)
+	defer store.destroy(&target)
+	profile: Profile
+	profile_error, store_error := init(&profile, &target)
+	testing.expect_value(t, profile_error, Error_Code.None)
+	testing.expect_value(t, store_error, store.Error_Code.None)
+	defer destroy(&profile)
+
+	result := materialize(&profile, &target)
+	testing.expect_value(t, result.error, rule.Error_Code.None)
+	thing_fact := store.Fact{subject = profile.terms.owl_thing, predicate = profile.terms.rdf_type, object = profile.terms.owl_class}
+	nothing_fact := store.Fact{subject = profile.terms.owl_nothing, predicate = profile.terms.rdf_type, object = profile.terms.owl_class}
+	testing.expect(t, store.contains(&target, thing_fact))
+	testing.expect(t, store.contains(&target, nothing_fact))
+	thing_id := store.id_for_fact(&target, thing_fact)
+	nothing_id := store.id_for_fact(&target, nothing_fact)
+	thing_found, nothing_found := false, false
+	for index in 0..<rule.derivation_count(&profile.materializer) {
+		derivation, found := rule.derivation_at(&profile.materializer, index)
+		if !found do continue
+		if derivation.fact_id == thing_id {
+			thing_found = true
+			testing.expect_value(t, derivation.rule_id, OWL_RL_CLS_THING)
+			testing.expect_value(t, len(derivation.supports), 0)
+		}
+		if derivation.fact_id == nothing_id {
+			nothing_found = true
+			testing.expect_value(t, derivation.rule_id, OWL_RL_CLS_NOTHING1)
+			testing.expect_value(t, len(derivation.supports), 0)
+		}
+	}
+	testing.expect(t, thing_found)
+	testing.expect(t, nothing_found)
+}
+
+@(test)
 test_object_property_rules_compose_at_one_fixpoint :: proc(t: ^testing.T) {
 	target: store.Store
 	testing.expect_value(t, store.init(&target), store.Error_Code.None)

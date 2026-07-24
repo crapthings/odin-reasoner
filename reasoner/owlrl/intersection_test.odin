@@ -48,6 +48,8 @@ test_intersection_list_rules_reach_joint_rdfs_fixpoint :: proc(t: ^testing.T) {
 
 	result := materialize_intersection(&profile, &target, {max_list_items = 4})
 	testing.expect_value(t, result.error, Intersection_Error_Code.None)
+	testing.expect(t, has_intersection_fact(&target, {intersection, rdf.iri(rdfs.RDFS_SUBCLASS), left}))
+	testing.expect(t, has_intersection_fact(&target, {intersection, rdf.iri(rdfs.RDFS_SUBCLASS), right}))
 	testing.expect(t, has_intersection_fact(&target, {x, rdf.iri(rdfs.RDF_TYPE), intersection}))
 	testing.expect(t, has_intersection_fact(&target, {x, rdf.iri(rdfs.RDF_TYPE), super}))
 	testing.expect(t, has_intersection_fact(&target, {y, rdf.iri(rdfs.RDF_TYPE), left}))

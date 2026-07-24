@@ -47,6 +47,8 @@ test_union_list_rule_reaches_joint_rdfs_fixpoint :: proc(t: ^testing.T) {
 
 	result := materialize_union(&profile, &target, {max_list_items = 4})
 	testing.expect_value(t, result.error, Union_Error_Code.None)
+	testing.expect(t, has_union_fact(&target, {left, rdf.iri(rdfs.RDFS_SUBCLASS), combined_class}))
+	testing.expect(t, has_union_fact(&target, {right, rdf.iri(rdfs.RDFS_SUBCLASS), combined_class}))
 	testing.expect(t, has_union_fact(&target, {a, rdf.iri(rdfs.RDF_TYPE), combined_class}))
 	testing.expect(t, has_union_fact(&target, {b, rdf.iri(rdfs.RDF_TYPE), combined_class}))
 	testing.expect(t, has_union_fact(&target, {a, rdf.iri(rdfs.RDF_TYPE), super}))
