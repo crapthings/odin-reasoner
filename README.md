@@ -21,9 +21,15 @@ of complete RDFS or OWL conformance.
 
 ## Part of the Odin RDF ecosystem
 
-```text
-odin-rdf  ── RDF terms, parsers, writers ──>  odin-reasoner  ── inferred snapshot ──>  odin-sparql
-                                                RDFS / bounded OWL                 optional query adapter
+```mermaid
+flowchart LR
+    RDF["odin-rdf<br/>RDF terms, parsers, writers"] --> Reasoner["odin-reasoner core<br/>RDFS Core + bounded OWL"]
+    Reasoner --> Snapshot["immutable inferred snapshot"]
+    Snapshot --> Adapter["optional<br/>adapter/sparql"]
+    Adapter --> SPARQL["odin-sparql<br/>bounded query execution"]
+
+    classDef optional fill:#f8fafc,stroke:#64748b,stroke-dasharray: 5 5
+    class Adapter,SPARQL optional
 ```
 
 - [**odin-rdf**](https://github.com/crapthings/odin-rdf) supplies the RDF 1.1
