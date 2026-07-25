@@ -44,9 +44,11 @@ many entries remain outside its rule-closure contract.
 | `WebOnt-differentFrom-001` | RDF-Based `owl:differentFrom` symmetry | `fixture_corpus_test:test_fixture_corpus_materializes_supported_rule_clusters` | pass |
 | `WebOnt-I5.8-011` | `dt-type1` zero-premise datatype axioms | same | pass |
 | `WebOnt-I5.8-006` | numeric datatype hierarchy + `scm-rng1` | same | pass |
+| `WebOnt-I5.8-008` | `xsd:short` ∩ `xsd:unsignedInt` range → `xsd:unsignedShort` | same | pass |
+| `WebOnt-I5.8-009` | `xsd:nonNegativeInteger` ∩ `xsd:nonPositiveInteger` range → `xsd:short` | same | pass |
 | `New-Feature-ReflexiveProperty-001` | explicit named-individual reflexivity | same | pass |
 
-These twenty-four approved RDF-Based cases are represented by checked-in, minimal
+These twenty-six approved RDF-Based cases are represented by checked-in, minimal
 rule-relevant N-Triples projections under [`testdata`](testdata/README.md).
 Twenty run through normal N-Triples import plus `materialize_all` or
 `materialize_all_checked`; the four datatype cases use the explicit
@@ -58,8 +60,8 @@ executing each complete source ontology.
 
 | Scope | Current result | Meaning |
 | --- | --- | --- |
-| Approved + RDF-Based archive cases | 24 selected gates pass; all 44 remaining cases have a recorded current-scope classification | Not a whole-manifest pass rate |
-| Local OWL 2 RL/RDF table | 53 implemented directions plus four labelled RDF-Based semantic supplement families mapped in the [rule ledger](conformance-ledger.md) | Authored rule and integration tests cover the documented bounded closure |
+| Approved + RDF-Based archive cases | 26 selected gates pass; all 42 remaining cases have a recorded current-scope classification | Not a whole-manifest pass rate |
+| Local OWL 2 RL/RDF table | 53 implemented directions plus five labelled RDF-Based semantic supplement families mapped in the [rule ledger](conformance-ledger.md) | Authored rule and integration tests cover the documented bounded closure |
 | Generalized RDF heads | Available only with `generalized_heads = true` | Strict RDF remains the default API behavior |
 | `dt-type2`, `dt-eq`, `dt-diff`, `dt-not-type` | Exact only where `odin-rdf` has a complete value mapping | No inferred fact is emitted for `Unknown` pairs |
 | Full OWL entailment, negative entailment, and profile-document validation | Not implemented as a conformance harness | The archive includes cases requiring unrestricted model-theoretic or syntax-translation behavior |
@@ -69,16 +71,14 @@ executing each complete source ontology.
 
 The following groups account for every remaining Approved + RDF-Based + RL
 archive entry: 10 full-semantic positive entailments, 4 negative-entailment
-tests, 2 datatype-intersection cases, 11 ontology-document/mapping cases, 14
-consistency or profile-validity cases, and 3 description-logic inconsistency
-cases — 44 in total. These are explicit current-scope classifications, not
+tests, 11 ontology-document/mapping cases, 14 consistency or profile-validity
+cases, and 3 description-logic inconsistency cases — 42 in total. These are explicit current-scope classifications, not
 skipped passes.
 
 | Archive group | Count | Classification | Why it is outside the current closure claim |
 | --- | ---: | --- | --- |
 | `DisjointClasses-001` / `-003`; `New-Feature-DisjointDataProperties-002`; `New-Feature-DisjointObjectProperties-001` / `-002`; `New-Feature-ObjectQCR-002`; `WebOnt-I5.26-010`; `WebOnt-I5.5-005`; `owl2-rl-rules-fp-differentFrom` / `-ifp-differentFrom` | 10 | Full-semantic positive entailment | The conclusions require complement-class construction, proving individual difference from a violated equality assumption, ontology-expression comprehension, or contrapositive functional-property reasoning. None is an OWL RL/RDF forward-rule conclusion. |
 | `New-Feature-Keys-004`; `New-Feature-ObjectPropertyChain-BJP-004`; `WebOnt-I4.6-004`; `WebOnt-I5.8-007` | 4 | Negative-entailment testing | The absence of a derived triple is not a proof of W3C negative entailment. These require a model witness or a dedicated negative-entailment harness. |
-| `WebOnt-I5.8-008` / `-009` | 2 | Datatype intersection semantics | Their conclusions depend on exact intersections of multiple numeric datatype ranges, beyond the supported immediate numeric subtype hierarchy. |
 | `FS2RDF-different-individuals-2-ar` / `-3-ar`, `FS2RDF-no-builtin-prefixes-ar`, `FS2RDF-same-individual-2-ar`, `New-Feature-AnnotationAnnotations-001`, `New-Feature-AxiomAnnotations-001`, `WebOnt-AnnotationProperty-003` / `-004`, `WebOnt-backwardCompatibleWith-002`, `WebOnt-imports-011`, `WebOnt-miscellaneous-303` | 11 | Ontology document mapping | These test OWL Functional Syntax/RDF/XML parsing, imports, annotations, or ontology-document profile handling. The reasoner intentionally starts at asserted RDF triples. |
 | `New-Feature-Keys-005`; `WebOnt-I5.26-001` / `-002` / `-005`; `WebOnt-disjointWith-003` through `-009`; `owl2-rl-anonymous-individual`; `owl2-rl-valid-oneof`; `owl2-rl-valid-rightside-allvaluesfrom` | 14 | Consistency or profile-validity only | A bounded forward closure can report supported contradictions, but it cannot prove arbitrary ontology consistency or OWL profile validity merely by finding no conflict. |
 | `WebOnt-description-logic-101` / `-103` / `-104` | 3 | Full description-logic inconsistency | These depend on complement-class and nested class-expression semantics beyond the implemented false-rule set. |
@@ -88,7 +88,7 @@ skipped passes.
 1. Keep the 24 executable gates green and only promote a newly added archive
    case after its complete source conclusion or contradiction is represented by
    a checked-in, rule-relevant fixture.
-2. Treat the six classified boundary families above as separate capability
+2. Treat the five classified boundary families above as separate capability
    projects: model witnesses, complete datatype intersections, ontology
    document processing, and full class-expression semantics must not be
    introduced implicitly through a local rule patch.

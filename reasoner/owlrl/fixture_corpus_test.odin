@@ -147,7 +147,7 @@ import store "../store"
 
 @(test)
 test_fixture_corpus_materializes_supported_rule_clusters :: proc(t: ^testing.T) {
-	fixtures := [18]Corpus_Case{
+	fixtures := [20]Corpus_Case{
 		{input_path = "reasoner/owlrl/testdata/01-schema-identity.input.nt", expected_path = "reasoner/owlrl/testdata/01-schema-identity.expected.nt"},
 		{input_path = "reasoner/owlrl/testdata/02-property-relations.input.nt", expected_path = "reasoner/owlrl/testdata/02-property-relations.expected.nt"},
 		{input_path = "reasoner/owlrl/testdata/03-restrictions-self.input.nt", expected_path = "reasoner/owlrl/testdata/03-restrictions-self.expected.nt"},
@@ -165,6 +165,8 @@ test_fixture_corpus_materializes_supported_rule_clusters :: proc(t: ^testing.T) 
 		{input_path = "reasoner/owlrl/testdata/w3c-different-from-001.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-different-from-001.expected.nt"},
 		{input_path = "reasoner/owlrl/testdata/w3c-i5-8-011.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-i5-8-011.expected.nt"},
 		{input_path = "reasoner/owlrl/testdata/w3c-i5-8-006.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-i5-8-006.expected.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-i5-8-008.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-i5-8-008.expected.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-i5-8-009.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-i5-8-009.expected.nt"},
 		{input_path = "reasoner/owlrl/testdata/w3c-reflexive-property-001.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-reflexive-property-001.expected.nt"},
 	}
 	for fixture in fixtures do run_closure_fixture(t, fixture)

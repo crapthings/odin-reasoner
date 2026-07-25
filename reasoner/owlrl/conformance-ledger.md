@@ -19,8 +19,8 @@ five multi-cluster successful closures, one list-derived checked conflict, and
 two transactional materialization failures. Its expected N-Triples are required
 conclusions rather than a claim to enumerate every profile closure fact.
 
-The test suite provides authored unit and integration fixtures plus twenty-seven
-external W3C semantic vectors below. The twenty-four OWL 2 vectors are normalized
+The test suite provides authored unit and integration fixtures plus twenty-nine
+external W3C semantic vectors below. The twenty-six OWL 2 vectors are normalized
 from a fixed W3C archive export; the three legacy OWL vectors are retained as
 independent regression evidence. This is still not a complete OWL 2 suite pass
 claim: the W3C Profile-RL manifest also contains conclusions that require
@@ -55,7 +55,7 @@ directions only; they do not claim OWL 1, OWL 2, or full OWL 2 RL conformance.
 
 `fixture_corpus_test.odin:test_fixture_corpus_materializes_supported_rule_clusters`
 and `test_fixture_corpus_reports_pinned_w3c_rl_rdf_conflicts` additionally
-run twenty-four approved RDF-Based OWL 2 RL test cases from the W3C static archive:
+run twenty-six approved RDF-Based OWL 2 RL test cases from the W3C static archive:
 
 - [`New-Feature-ObjectPropertyChain-001`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf),
   which derives the declared `hasAunt` property-chain consequence (`prp-spo2`).
@@ -114,6 +114,12 @@ run twenty-four approved RDF-Based OWL 2 RL test cases from the W3C static archi
 - [`WebOnt-I5.8-006`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf)
   verifies the exact `xsd:byte` → `xsd:short` numeric datatype hierarchy edge
   composed with `scm-rng1`.
+- [`WebOnt-I5.8-008`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf)
+  verifies that the nonempty intersection of `xsd:short` and `xsd:unsignedInt`
+  ranges entails the named `xsd:unsignedShort` range.
+- [`WebOnt-I5.8-009`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf)
+  verifies that the singleton intersection of `xsd:nonNegativeInteger` and
+  `xsd:nonPositiveInteger` ranges is contained in `xsd:short`.
 - [`New-Feature-ReflexiveProperty-001`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf)
   verifies a `knows` self-edge for an explicitly declared `owl:NamedIndividual`
   and `owl:ReflexiveProperty`. It is a deliberately bounded RDF-Based
@@ -150,6 +156,7 @@ the named OWL 2 RL/RDF rule consequence, not the complete source ontology.
 | `eq-ref` subject/predicate/object, `eq-sym`, `eq-trans`, replacement subject/predicate/object / 129–136 | `profile_test:test_same_as_closure_replaces_subject_predicate_and_object`, `test_same_as_literal_boundary_preserves_object_replacement_only` | generalized-RDF literal subjects are omitted |
 | RDF-Based `owl:differentFrom` symmetry | `profile_test:test_rdf_based_different_from_is_symmetric`, `fixture_corpus_test:test_fixture_corpus_materializes_supported_rule_clusters` | semantic supplement; intentionally not counted as a W3C RL/RDF table direction |
 | RDF-Based numeric datatype hierarchy | `profile_test:test_rdf_based_numeric_datatype_hierarchy_reaches_transitive_supertypes`, `fixture_corpus_test:test_fixture_corpus_materializes_supported_rule_clusters` | thirteen exact immediate XML Schema numeric-derived-type edges; intentionally not counted as W3C RL/RDF table directions |
+| RDF-Based numeric range intersection | `numeric_range_intersection_test:test_numeric_range_intersection_derives_exact_named_integer_ranges`, `fixture_corpus_test:test_fixture_corpus_materializes_supported_rule_clusters` | only nonempty pairwise intersections of the exact modeled integer datatype intervals; intentionally not counted as a W3C RL/RDF table direction |
 | RDF-Based named-individual reflexivity | `profile_test:test_rdf_based_reflexive_property_closes_explicit_named_individuals`, `fixture_corpus_test:test_fixture_corpus_materializes_supported_rule_clusters` | `owl:NamedIndividual` subset only; intentionally not counted as a W3C RL/RDF table direction or a full-domain reflexivity claim |
 | RDF-Based self-chain transitivity | `fixture_corpus_test:test_fixture_corpus_materializes_supported_rule_clusters` | exact two-item `P, P` chain only; intentionally not counted as a W3C RL/RDF rule-table direction |
 | `prp-fp`, `prp-ifp` / 137–138 | `profile_test:test_functional_properties_derive_equality_and_replacement`, `test_functional_property_skips_literal_subject_equality_head` | literal equality heads are omitted |

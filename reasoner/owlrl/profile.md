@@ -8,13 +8,15 @@ rules](https://www.w3.org/TR/owl2-profiles/#Reasoning_in_OWL_2_RL_and_RDF_Graphs
 The [conformance ledger](conformance-ledger.md) maps every implemented static
 and dynamic direction to local evidence and its strict-RDF/resource boundary.
 
-The profile also adds four explicitly labelled RDF-Based semantic supplement
+The profile also adds five explicitly labelled RDF-Based semantic supplement
 families: `owl:differentFrom` symmetry, the immediate XML Schema
 numeric-derived-type hierarchy, and reflexivity for explicitly typed
 `owl:NamedIndividual` resources, and the two-step self property-chain form of
-transitivity. They are not counted as W3C RL/RDF table
+transitivity, plus nonempty pairwise intersections of modeled integer property
+ranges. They are not counted as W3C RL/RDF table
 directions, but are required by the Profile-RL archive's
 `WebOnt-differentFrom-001`, `WebOnt-I5.8-006`, and
+`WebOnt-I5.8-008` / `-009` and
 `New-Feature-ReflexiveProperty-001` / `chain2trans1` entailment cases.
 
 | ID | Rule |
@@ -79,6 +81,7 @@ directions, but are required by the Profile-RL archive's
 | `OWL-RDF-NUMERIC-DATATYPE-SUBCLASS` (168) | Immediate XML Schema numeric derived type → parent datatype `rdfs:subClassOf` (13 zero-premise RDF-Based semantic instances) |
 | `OWL-RDF-NAMED-REFLEXIVE-PROPERTY` (169) | `P rdf:type owl:ReflexiveProperty`, `x rdf:type owl:NamedIndividual` → `x P x` (bounded RDF-Based semantic supplement) |
 | `OWL-RDF-PROPERTY-CHAIN-TRANSITIVE` (170) | `P owl:propertyChainAxiom (P P)` → `P rdf:type owl:TransitiveProperty` (exact RDF-Based semantic supplement) |
+| `OWL-RDF-NUMERIC-RANGE-INTERSECTION` (171) | `P rdfs:range A`, `P rdfs:range B` → `P rdfs:range T` when the nonempty modeled integer intersection `A ∩ B` is wholly contained in `T` (RDF-Based semantic supplement) |
 
 The RDFS and OWL rules are passed to one semi-naive materializer, so either
 cluster can drive the other to a single bounded fixpoint. `init` reserves all
@@ -88,7 +91,7 @@ ninety-eight RDFS/OWL vocabulary terms as one store batch before building rules.
 
 `materialize_all` is the public entry point when an application needs every
 currently supported entailment family. It alternates the static one-hundred-and-sixteen-rule
-RDFS/OWL table with `owl:oneOf`, `owl:intersectionOf`, `owl:unionOf`,
+RDFS/OWL table with modeled numeric-range intersections, `owl:oneOf`, `owl:intersectionOf`, `owl:unionOf`,
 `owl:propertyChainAxiom`, and `owl:hasKey` expansion until a joint fixpoint. It uses one cloned
 working store and commits inferred facts only after success: any static-rule,
 list, path-frontier, derivation, or outer-round error leaves the caller's store

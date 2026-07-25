@@ -64,8 +64,8 @@ Materialize_All_Result :: struct {
 }
 
 // materialize_all reaches one transactional fixpoint across the profile's
-// static RDFS/OWL rules and its supported oneOf, intersectionOf, unionOf,
-// propertyChainAxiom, and hasKey phases. The existing focused materializers remain useful
+// static RDFS/OWL rules and its supported numeric range-intersection, oneOf,
+// intersectionOf, unionOf, propertyChainAxiom, and hasKey phases. The existing focused materializers remain useful
 // for isolating one rule family; this is the complete supported closure entry
 // point. It also stages first-support closure provenance for static and list
 // facts; focused dynamic materializers retain their smaller origin-only API.
@@ -130,6 +130,21 @@ materialize_all :: proc(profile: ^Profile, target: ^store.Store, options: Materi
 		rule.destroy(&temporary)
 		result.inferred_facts += static.inferred_facts
 		phase_added := static.inferred_facts
+
+		remaining = remaining_derivations(options.max_derivations, result.inferred_facts)
+		numeric_range_added, numeric_range_error, numeric_range_store_error := emit_numeric_range_intersections(profile, &work, remaining, options.generalized_heads, &staged_provenance)
+		if numeric_range_error != .None {
+			if numeric_range_error == .Rule_Error {
+				result.error = .Rule_Error
+				result.rule_error = .Max_Derivations
+			} else {
+				result.error = numeric_range_error == .Out_Of_Memory ? .Out_Of_Memory : .Store_Error
+				result.store_error = numeric_range_store_error
+			}
+			return result
+		}
+		result.inferred_facts += numeric_range_added
+		phase_added += numeric_range_added
 
 		remaining = remaining_derivations(options.max_derivations, result.inferred_facts)
 		one_of_added, one_of_error, one_of_list_error, one_of_store_error := emit_one_of(profile, &work, one_of_options, remaining, &staged_provenance)

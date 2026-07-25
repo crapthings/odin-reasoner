@@ -89,6 +89,11 @@ OWL_RDF_NAMED_REFLEXIVE_PROPERTY :: rule.Rule_ID(169)
 // declaration P o P subPropertyOf P entails that P is transitive.
 OWL_RDF_PROPERTY_CHAIN_TRANSITIVE :: rule.Rule_ID(170)
 
+// OWL_RDF_NUMERIC_RANGE_INTERSECTION is a bounded RDF-Based semantic
+// supplement for nonempty intersections of two exact XML Schema integer range
+// declarations on the same property.
+OWL_RDF_NUMERIC_RANGE_INTERSECTION :: rule.Rule_ID(171)
+
 OWL_EQUIVALENT_CLASS    :: "http://www.w3.org/2002/07/owl#equivalentClass"
 OWL_EQUIVALENT_PROPERTY :: "http://www.w3.org/2002/07/owl#equivalentProperty"
 OWL_INVERSE_OF           :: "http://www.w3.org/2002/07/owl#inverseOf"

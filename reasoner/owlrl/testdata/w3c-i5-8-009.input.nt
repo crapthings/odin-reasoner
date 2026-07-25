@@ -1,0 +1,2 @@
+<urn:w3c:WebOnt-I5.8-009#p> <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#nonNegativeInteger> .
+<urn:w3c:WebOnt-I5.8-009#p> <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#nonPositiveInteger> .
