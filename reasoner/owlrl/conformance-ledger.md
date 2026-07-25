@@ -19,8 +19,8 @@ five multi-cluster successful closures, one list-derived checked conflict, and
 two transactional materialization failures. Its expected N-Triples are required
 conclusions rather than a claim to enumerate every profile closure fact.
 
-The test suite provides authored unit and integration fixtures plus twenty-nine
-external W3C semantic vectors below. The twenty-six OWL 2 vectors are normalized
+The test suite provides authored unit and integration fixtures plus thirty-four
+external W3C semantic vectors below. The thirty-one OWL 2 vectors are normalized
 from a fixed W3C archive export; the three legacy OWL vectors are retained as
 independent regression evidence. This is still not a complete OWL 2 suite pass
 claim: the W3C Profile-RL manifest also contains conclusions that require
@@ -55,7 +55,7 @@ directions only; they do not claim OWL 1, OWL 2, or full OWL 2 RL conformance.
 
 `fixture_corpus_test.odin:test_fixture_corpus_materializes_supported_rule_clusters`
 and `test_fixture_corpus_reports_pinned_w3c_rl_rdf_conflicts` additionally
-run twenty-six approved RDF-Based OWL 2 RL test cases from the W3C static archive:
+run thirty-one approved RDF-Based OWL 2 RL test cases from the W3C static archive:
 
 - [`New-Feature-ObjectPropertyChain-001`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf),
   which derives the declared `hasAunt` property-chain consequence (`prp-spo2`).
@@ -75,6 +75,11 @@ run twenty-six approved RDF-Based OWL 2 RL test cases from the W3C static archiv
 - [`New-Feature-DisjointDataProperties-001`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf),
   which reports the same subject/object pair under disjoint properties
   (`prp-pdw`).
+- [`New-Feature-DisjointDataProperties-002`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf)
+  and [`New-Feature-DisjointObjectProperties-001`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf)
+  / `-002`, which infer pairwise different individuals from binary and
+  `owl:AllDisjointProperties` encodings. This is an explicitly bounded
+  RDF-Based semantic supplement, not a W3C RL/RDF rule-table direction.
 - [`New-Feature-AsymmetricProperty-001`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf)
   and [`New-Feature-IrreflexiveProperty-001`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf),
   which report `prp-asyp` and `prp-irp` contradictions respectively.
@@ -125,6 +130,10 @@ run twenty-six approved RDF-Based OWL 2 RL test cases from the W3C static archiv
   and `owl:ReflexiveProperty`. It is a deliberately bounded RDF-Based
   supplement, rather than a claim that the engine enumerates every resource in
   the graph as a reflexive witness.
+- [`owl2-rl-rules-fp-differentFrom`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf)
+  and `-ifp-differentFrom` verify finite inequality preservation through
+  functional and inverse-functional equality constraints. They are semantic
+  supplements, not a claim that arbitrary contrapositive OWL reasoning is available.
 
 The input source is the archive's fixed
 [`profile-RL.rdf`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf),
@@ -132,7 +141,8 @@ retrieved with SHA-256
 `6415369555af022fedd0fe9a7d6b56eb274f89284e4109d7303540ec75c76988`.
 Minimal rule-relevant N-Triples projections are checked into `testdata/` so
 the gate stays offline and does not depend on a live W3C endpoint. They verify
-the named OWL 2 RL/RDF rule consequence, not the complete source ontology.
+the named OWL 2 RL/RDF rule consequence or explicitly labelled semantic
+supplement, not the complete source ontology.
 
 ## Static entailment table
 
@@ -157,6 +167,8 @@ the named OWL 2 RL/RDF rule consequence, not the complete source ontology.
 | RDF-Based `owl:differentFrom` symmetry | `profile_test:test_rdf_based_different_from_is_symmetric`, `fixture_corpus_test:test_fixture_corpus_materializes_supported_rule_clusters` | semantic supplement; intentionally not counted as a W3C RL/RDF table direction |
 | RDF-Based numeric datatype hierarchy | `profile_test:test_rdf_based_numeric_datatype_hierarchy_reaches_transitive_supertypes`, `fixture_corpus_test:test_fixture_corpus_materializes_supported_rule_clusters` | thirteen exact immediate XML Schema numeric-derived-type edges; intentionally not counted as W3C RL/RDF table directions |
 | RDF-Based numeric range intersection | `numeric_range_intersection_test:test_numeric_range_intersection_derives_exact_named_integer_ranges`, `fixture_corpus_test:test_fixture_corpus_materializes_supported_rule_clusters` | only nonempty pairwise intersections of the exact modeled integer datatype intervals; intentionally not counted as a W3C RL/RDF table direction |
+| RDF-Based property-disjoint difference | `disjoint_property_difference_test:test_disjoint_property_difference_derives_binary_and_list_based_w3c_shapes`, `fixture_corpus_test:test_fixture_corpus_materializes_supported_rule_clusters` | binary `owl:propertyDisjointWith` and every pair in a valid `owl:AllDisjointProperties` list; infers only a difference forced by one shared endpoint, and is intentionally not counted as a W3C RL/RDF table direction |
+| RDF-Based functional-property difference | `functional_property_difference_test:test_functional_property_difference_preserves_explicit_inequality`, `fixture_corpus_test:test_fixture_corpus_materializes_supported_rule_clusters` | preserves an asserted `owl:differentFrom` through two functional or inverse-functional property assertions; intentionally not counted as a W3C RL/RDF table direction |
 | RDF-Based named-individual reflexivity | `profile_test:test_rdf_based_reflexive_property_closes_explicit_named_individuals`, `fixture_corpus_test:test_fixture_corpus_materializes_supported_rule_clusters` | `owl:NamedIndividual` subset only; intentionally not counted as a W3C RL/RDF table direction or a full-domain reflexivity claim |
 | RDF-Based self-chain transitivity | `fixture_corpus_test:test_fixture_corpus_materializes_supported_rule_clusters` | exact two-item `P, P` chain only; intentionally not counted as a W3C RL/RDF rule-table direction |
 | `prp-fp`, `prp-ifp` / 137–138 | `profile_test:test_functional_properties_derive_equality_and_replacement`, `test_functional_property_skips_literal_subject_equality_head` | literal equality heads are omitted |

@@ -93,6 +93,13 @@ OWL_RDF_PROPERTY_CHAIN_TRANSITIVE :: rule.Rule_ID(170)
 // supplement for nonempty intersections of two exact XML Schema integer range
 // declarations on the same property.
 OWL_RDF_NUMERIC_RANGE_INTERSECTION :: rule.Rule_ID(171)
+// This bounded RDF-Based semantic supplement infers owl:differentFrom from
+// binary or list-based disjoint-property assertions with one shared endpoint.
+OWL_RDF_PROPERTY_DISJOINT_DIFFERENCE :: rule.Rule_ID(172)
+// These bounded RDF-Based semantic supplements preserve owl:differentFrom
+// through functional and inverse-functional property equality constraints.
+OWL_RDF_FUNCTIONAL_PROPERTY_DIFFERENCE :: rule.Rule_ID(173)
+OWL_RDF_INVERSE_FUNCTIONAL_PROPERTY_DIFFERENCE :: rule.Rule_ID(174)
 
 OWL_EQUIVALENT_CLASS    :: "http://www.w3.org/2002/07/owl#equivalentClass"
 OWL_EQUIVALENT_PROPERTY :: "http://www.w3.org/2002/07/owl#equivalentProperty"

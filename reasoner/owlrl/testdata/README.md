@@ -47,18 +47,23 @@ through the ordinary parser/import boundary and uses `materialize_all` or
 | `w3c-i5-8-008` | successful closure | W3C `WebOnt-I5.8-008`, `xsd:short` ∩ `xsd:unsignedInt` range entails `xsd:unsignedShort` |
 | `w3c-i5-8-009` | successful closure | W3C `WebOnt-I5.8-009`, `xsd:nonNegativeInteger` ∩ `xsd:nonPositiveInteger` range entails `xsd:short` |
 | `w3c-reflexive-property-001` | successful closure | W3C `New-Feature-ReflexiveProperty-001`, explicit named-individual reflexivity |
+| `w3c-disjoint-data-properties-002` | successful closure | W3C `New-Feature-DisjointDataProperties-002`, list-based property-disjoint individual difference |
+| `w3c-disjoint-object-properties-001` | successful closure | W3C `New-Feature-DisjointObjectProperties-001`, binary property-disjoint individual difference |
+| `w3c-disjoint-object-properties-002` | successful closure | W3C `New-Feature-DisjointObjectProperties-002`, list-based property-disjoint individual difference |
+| `w3c-functional-property-different-from` | successful closure | W3C `owl2-rl-rules-fp-differentFrom`, functional-property inequality preservation |
+| `w3c-inverse-functional-property-different-from` | successful closure | W3C `owl2-rl-rules-ifp-differentFrom`, inverse-functional-property inequality preservation |
 
-The twenty-six `w3c-*` fixtures are minimal, rule-relevant N-Triples projections of
+The thirty-one `w3c-*` fixtures are minimal, rule-relevant N-Triples projections of
 the corresponding approved, RDF-Based OWL 2 RL test cases in the W3C archive's
 [`profile-RL.rdf`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf). They
 retain the premise triples needed for the named rule conclusion or
 contradiction; they are not a claim to execute each complete source ontology.
 The source was retrieved from that static archive with SHA-256
 `6415369555af022fedd0fe9a7d6b56eb274f89284e4109d7303540ec75c76988`.
-Twenty-two use the normal complete closure; the four datatype conflict fixtures
+Twenty-seven use the normal complete closure; the four datatype conflict fixtures
 deliberately use the separate generalized datatype closure, whose exact
 value-identity rules are opt-in. They test only the exact forward conclusion or contradiction
-represented by the OWL 2 RL/RDF rule table; other profile-RL entries that
+represented by the OWL 2 RL/RDF rule table, or an explicitly labelled RDF-Based semantic supplement; other profile-RL entries that
 require unrestricted OWL semantic reasoning are tracked as outside this
 bounded rule engine.
 

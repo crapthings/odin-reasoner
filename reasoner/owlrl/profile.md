@@ -8,16 +8,19 @@ rules](https://www.w3.org/TR/owl2-profiles/#Reasoning_in_OWL_2_RL_and_RDF_Graphs
 The [conformance ledger](conformance-ledger.md) maps every implemented static
 and dynamic direction to local evidence and its strict-RDF/resource boundary.
 
-The profile also adds five explicitly labelled RDF-Based semantic supplement
+The profile also adds seven explicitly labelled RDF-Based semantic supplement
 families: `owl:differentFrom` symmetry, the immediate XML Schema
-numeric-derived-type hierarchy, and reflexivity for explicitly typed
+numeric-derived-type hierarchy, reflexivity for explicitly typed
 `owl:NamedIndividual` resources, and the two-step self property-chain form of
 transitivity, plus nonempty pairwise intersections of modeled integer property
-ranges. They are not counted as W3C RL/RDF table
+ranges, property-disjoint difference, and inequality preservation through
+functional and inverse-functional properties. They are not counted as W3C RL/RDF table
 directions, but are required by the Profile-RL archive's
-`WebOnt-differentFrom-001`, `WebOnt-I5.8-006`, and
+`WebOnt-differentFrom-001`, `New-Feature-DisjointDataProperties-002`,
+`New-Feature-DisjointObjectProperties-001` / `-002`, `WebOnt-I5.8-006`, and
 `WebOnt-I5.8-008` / `-009` and
-`New-Feature-ReflexiveProperty-001` / `chain2trans1` entailment cases.
+`New-Feature-ReflexiveProperty-001` / `chain2trans1` /
+`owl2-rl-rules-fp-differentFrom` / `-ifp-differentFrom` entailment cases.
 
 | ID | Rule |
 | --- | --- |
@@ -82,6 +85,9 @@ directions, but are required by the Profile-RL archive's
 | `OWL-RDF-NAMED-REFLEXIVE-PROPERTY` (169) | `P rdf:type owl:ReflexiveProperty`, `x rdf:type owl:NamedIndividual` → `x P x` (bounded RDF-Based semantic supplement) |
 | `OWL-RDF-PROPERTY-CHAIN-TRANSITIVE` (170) | `P owl:propertyChainAxiom (P P)` → `P rdf:type owl:TransitiveProperty` (exact RDF-Based semantic supplement) |
 | `OWL-RDF-NUMERIC-RANGE-INTERSECTION` (171) | `P rdfs:range A`, `P rdfs:range B` → `P rdfs:range T` when the nonempty modeled integer intersection `A ∩ B` is wholly contained in `T` (RDF-Based semantic supplement) |
+| `OWL-RDF-PROPERTY-DISJOINT-DIFFERENCE` (172) | disjoint property assertions sharing one endpoint → the two remaining resources are `owl:differentFrom` (RDF-Based semantic supplement; supports binary and `owl:AllDisjointProperties` list encodings) |
+| `OWL-RDF-FUNCTIONAL-PROPERTY-DIFFERENCE` (173) | `P rdf:type owl:FunctionalProperty`, `a P x`, `b P y`, `x owl:differentFrom y` → `a owl:differentFrom b` (RDF-Based semantic supplement) |
+| `OWL-RDF-INVERSE-FUNCTIONAL-PROPERTY-DIFFERENCE` (174) | `P rdf:type owl:InverseFunctionalProperty`, `a P x`, `b P y`, `a owl:differentFrom b` → `x owl:differentFrom y` (RDF-Based semantic supplement) |
 
 The RDFS and OWL rules are passed to one semi-naive materializer, so either
 cluster can drive the other to a single bounded fixpoint. `init` reserves all

@@ -5,6 +5,20 @@ new capabilities may require a minor version and callers should pin releases.
 
 ## Unreleased
 
+## 0.6.0 - 2026-07-25
+
+- Add bounded RDF-Based `owl:differentFrom` semantic supplements for binary
+  and `owl:AllDisjointProperties` encodings, plus preservation of explicit
+  inequality through functional and inverse-functional property constraints.
+  Strict RDF continues to omit literal-subject conclusions unless
+  `generalized_heads` is enabled.
+- Add five pinned W3C RDF-Based OWL 2 RL positive-entailment vectors:
+  `New-Feature-DisjointDataProperties-002`,
+  `New-Feature-DisjointObjectProperties-001` / `-002`, and
+  `owl2-rl-rules-fp-differentFrom` / `-ifp-differentFrom`. The offline
+  approved selection rises from 26 to 31 cases; the remaining 37 archive
+  entries retain explicit scope classifications.
+
 ## 0.5.0 - 2026-07-25
 
 - Add a bounded RDF-Based numeric range-intersection supplement: two

@@ -1,0 +1,11 @@
+<urn:w3c:New-Feature-DisjointDataProperties-002#group> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#AllDisjointProperties> .
+<urn:w3c:New-Feature-DisjointDataProperties-002#group> <http://www.w3.org/2002/07/owl#members> _:properties .
+_:properties <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <urn:w3c:New-Feature-DisjointDataProperties-002#hasName> .
+_:properties <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:properties-2 .
+_:properties-2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <urn:w3c:New-Feature-DisjointDataProperties-002#hasAddress> .
+_:properties-2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:properties-3 .
+_:properties-3 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <urn:w3c:New-Feature-DisjointDataProperties-002#hasZip> .
+_:properties-3 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+<urn:w3c:New-Feature-DisjointDataProperties-002#Peter> <urn:w3c:New-Feature-DisjointDataProperties-002#hasName> "Peter Griffin" .
+<urn:w3c:New-Feature-DisjointDataProperties-002#Peter_Griffin> <urn:w3c:New-Feature-DisjointDataProperties-002#hasAddress> "Peter Griffin" .
+<urn:w3c:New-Feature-DisjointDataProperties-002#Petre> <urn:w3c:New-Feature-DisjointDataProperties-002#hasZip> "Peter Griffin" .
