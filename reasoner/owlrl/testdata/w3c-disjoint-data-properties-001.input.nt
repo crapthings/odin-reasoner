@@ -1,0 +1,3 @@
+<http://example.org/hasName> <http://www.w3.org/2002/07/owl#propertyDisjointWith> <http://example.org/hasAddress> .
+<http://example.org/Peter> <http://example.org/hasName> "Peter Griffin" .
+<http://example.org/Peter> <http://example.org/hasAddress> "Peter Griffin" .

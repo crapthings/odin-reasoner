@@ -1,0 +1,3 @@
+<http://example.org/hasAge> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#FunctionalProperty> .
+<http://example.org/a> <http://example.org/hasAge> "18"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/a> <http://example.org/hasAge> "19"^^<http://www.w3.org/2001/XMLSchema#integer> .

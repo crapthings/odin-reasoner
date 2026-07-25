@@ -525,6 +525,74 @@ test_restriction_schema_subsumption_rules_preserve_each_direction :: proc(t: ^te
 }
 
 @(test)
+test_rdf_based_different_from_is_symmetric :: proc(t: ^testing.T) {
+	target: store.Store
+	testing.expect_value(t, store.init(&target), store.Error_Code.None)
+	defer store.destroy(&target)
+	profile: Profile
+	profile_error, store_error := init(&profile, &target)
+	testing.expect_value(t, profile_error, Error_Code.None)
+	testing.expect_value(t, store_error, store.Error_Code.None)
+	defer destroy(&profile)
+
+	left, right := rdf.iri("urn:different-left"), rdf.iri("urn:different-right")
+	different_from := rdf.iri(OWL_DIFFERENT_FROM)
+	add(t, &target, {left, different_from, right})
+
+	result := materialize(&profile, &target)
+	testing.expect_value(t, result.error, rule.Error_Code.None)
+	testing.expect(t, has(&target, {right, different_from, left}))
+}
+
+@(test)
+test_rdf_based_reflexive_property_closes_explicit_named_individuals :: proc(t: ^testing.T) {
+	target: store.Store
+	testing.expect_value(t, store.init(&target), store.Error_Code.None)
+	defer store.destroy(&target)
+	profile: Profile
+	profile_error, store_error := init(&profile, &target)
+	testing.expect_value(t, profile_error, Error_Code.None)
+	testing.expect_value(t, store_error, store.Error_Code.None)
+	defer destroy(&profile)
+
+	type := rdf.iri(rdfs.RDF_TYPE)
+	property := rdf.iri("urn:reflexive-property")
+	individual := rdf.iri("urn:reflexive-individual")
+	add(t, &target, {property, type, rdf.iri(OWL_REFLEXIVE_PROPERTY)})
+	add(t, &target, {individual, type, rdf.iri(OWL_NAMED_INDIVIDUAL)})
+
+	result := materialize(&profile, &target)
+	testing.expect_value(t, result.error, rule.Error_Code.None)
+	testing.expect(t, has(&target, {individual, property, individual}))
+}
+
+@(test)
+test_rdf_based_numeric_datatype_hierarchy_reaches_transitive_supertypes :: proc(t: ^testing.T) {
+	target: store.Store
+	testing.expect_value(t, store.init(&target), store.Error_Code.None)
+	defer store.destroy(&target)
+	profile: Profile
+	profile_error, store_error := init(&profile, &target)
+	testing.expect_value(t, profile_error, Error_Code.None)
+	testing.expect_value(t, store_error, store.Error_Code.None)
+	defer destroy(&profile)
+
+	result := materialize(&profile, &target)
+	testing.expect_value(t, result.error, rule.Error_Code.None)
+	subclass := rdf.iri(rdfs.RDFS_SUBCLASS)
+	byte := rdf.iri("http://www.w3.org/2001/XMLSchema#byte")
+	short := rdf.iri("http://www.w3.org/2001/XMLSchema#short")
+	integer := rdf.iri("http://www.w3.org/2001/XMLSchema#integer")
+	decimal := rdf.iri("http://www.w3.org/2001/XMLSchema#decimal")
+	unsigned_byte := rdf.iri("http://www.w3.org/2001/XMLSchema#unsignedByte")
+	non_negative := rdf.iri("http://www.w3.org/2001/XMLSchema#nonNegativeInteger")
+	testing.expect(t, has(&target, {byte, subclass, short}))
+	testing.expect(t, has(&target, {byte, subclass, integer}))
+	testing.expect(t, has(&target, {byte, subclass, decimal}))
+	testing.expect(t, has(&target, {unsigned_byte, subclass, non_negative}))
+}
+
+@(test)
 test_same_as_closure_replaces_subject_predicate_and_object :: proc(t: ^testing.T) {
 	target: store.Store
 	testing.expect_value(t, store.init(&target), store.Error_Code.None)

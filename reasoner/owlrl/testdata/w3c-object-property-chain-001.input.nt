@@ -1,0 +1,7 @@
+<http://example.org/hasAunt> <http://www.w3.org/2002/07/owl#propertyChainAxiom> _:chain .
+_:chain <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://example.org/hasMother> .
+_:chain <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:chain-tail .
+_:chain-tail <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://example.org/hasSister> .
+_:chain-tail <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+<http://example.org/Stewie> <http://example.org/hasMother> <http://example.org/Lois> .
+<http://example.org/Lois> <http://example.org/hasSister> <http://example.org/Carol> .

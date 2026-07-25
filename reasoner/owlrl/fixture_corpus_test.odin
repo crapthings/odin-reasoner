@@ -67,8 +67,10 @@ import store "../store"
 	expected: store.Store
 	testing.expect_value(t, store.init(&expected), store.Error_Code.None)
 	defer store.destroy(&expected)
-	if !load_ntriples_fixture(t, fixture.expected_path, &expected) do return
-	expect_fixture_conclusions(t, &target, &expected)
+	if len(fixture.expected_path) > 0 {
+		if !load_ntriples_fixture(t, fixture.expected_path, &expected) do return
+		expect_fixture_conclusions(t, &target, &expected)
+	}
 }
 
 @(private) run_checked_fixture :: proc(t: ^testing.T, fixture: Corpus_Case, expected_violation: Violation_Kind) {
@@ -95,8 +97,32 @@ import store "../store"
 	expected: store.Store
 	testing.expect_value(t, store.init(&expected), store.Error_Code.None)
 	defer store.destroy(&expected)
-	if !load_ntriples_fixture(t, fixture.expected_path, &expected) do return
-	expect_fixture_conclusions(t, &target, &expected)
+	if len(fixture.expected_path) > 0 {
+		if !load_ntriples_fixture(t, fixture.expected_path, &expected) do return
+		expect_fixture_conclusions(t, &target, &expected)
+	}
+}
+
+@(private) run_generalized_datatype_checked_fixture :: proc(t: ^testing.T, input_path: string, expected_violation: Violation_Kind) {
+	target: store.Store
+	testing.expect_value(t, store.init(&target), store.Error_Code.None)
+	defer store.destroy(&target)
+	if !load_ntriples_fixture(t, input_path, &target) do return
+
+	profile: Profile
+	profile_error, store_error := init(&profile, &target)
+	testing.expect_value(t, profile_error, Error_Code.None)
+	testing.expect_value(t, store_error, store.Error_Code.None)
+	defer destroy(&profile)
+	report: Report
+	init_report(&report)
+	defer destroy_report(&report)
+
+	result := materialize_generalized_datatypes_checked(&profile, &target, &report)
+	testing.expect_value(t, result.materialization.error, Generalized_Datatype_Error_Code.None)
+	testing.expect_value(t, result.consistency, Consistency_Error_Code.None)
+	testing.expect(t, !result.consistent)
+	testing.expect(t, has_kind(&report, expected_violation))
 }
 
 @(private) run_failure_fixture :: proc(t: ^testing.T, fixture: Failure_Case) {
@@ -121,12 +147,25 @@ import store "../store"
 
 @(test)
 test_fixture_corpus_materializes_supported_rule_clusters :: proc(t: ^testing.T) {
-	fixtures := [5]Corpus_Case{
+	fixtures := [18]Corpus_Case{
 		{input_path = "reasoner/owlrl/testdata/01-schema-identity.input.nt", expected_path = "reasoner/owlrl/testdata/01-schema-identity.expected.nt"},
 		{input_path = "reasoner/owlrl/testdata/02-property-relations.input.nt", expected_path = "reasoner/owlrl/testdata/02-property-relations.expected.nt"},
 		{input_path = "reasoner/owlrl/testdata/03-restrictions-self.input.nt", expected_path = "reasoner/owlrl/testdata/03-restrictions-self.expected.nt"},
 		{input_path = "reasoner/owlrl/testdata/04-lists-chain.input.nt", expected_path = "reasoner/owlrl/testdata/04-lists-chain.expected.nt"},
 		{input_path = "reasoner/owlrl/testdata/05-declarations.input.nt", expected_path = "reasoner/owlrl/testdata/05-declarations.expected.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-object-property-chain-001.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-object-property-chain-001.expected.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-object-property-chain-bjp-003.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-object-property-chain-bjp-003.expected.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-chain2trans1.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-chain2trans1.expected.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-keys-003.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-keys-003.expected.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-equivalent-property-002.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-equivalent-property-002.expected.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-equivalent-property-003.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-equivalent-property-003.expected.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-equivalent-class-002.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-equivalent-class-002.expected.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-equivalent-class-003.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-equivalent-class-003.expected.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-same-as-001.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-same-as-001.expected.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-different-from-001.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-different-from-001.expected.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-i5-8-011.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-i5-8-011.expected.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-i5-8-006.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-i5-8-006.expected.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-reflexive-property-001.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-reflexive-property-001.expected.nt"},
 	}
 	for fixture in fixtures do run_closure_fixture(t, fixture)
 }
@@ -137,6 +176,54 @@ test_fixture_corpus_reports_list_derived_conflicts_after_closure :: proc(t: ^tes
 		input_path = "reasoner/owlrl/testdata/06-list-conflict.input.nt",
 		expected_path = "reasoner/owlrl/testdata/06-list-conflict.expected.nt",
 	}, .Disjoint_Classes)
+}
+
+@(test)
+test_fixture_corpus_reports_pinned_w3c_rl_rdf_conflicts :: proc(t: ^testing.T) {
+	fixtures := [7]Failure_Case{
+		{input_path = "reasoner/owlrl/testdata/w3c-disjoint-data-properties-001.input.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-asymmetric-property-001.input.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-negative-object-property-assertion-001.input.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-negative-data-property-assertion-001.input.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-disjoint-classes-002.input.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-irreflexive-property-001.input.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-nothing-001.input.nt"},
+	}
+	violations := [7]Violation_Kind{
+		.Disjoint_Properties,
+		.Asymmetric_Property,
+		.Negative_Property_Assertion,
+		.Negative_Property_Assertion,
+		.Disjoint_Classes,
+		.Irreflexive_Property,
+		.Nothing_Instance,
+	}
+	for index in 0..<len(fixtures) {
+		run_checked_fixture(t, {input_path = fixtures[index].input_path}, violations[index])
+	}
+}
+
+@(test)
+test_fixture_corpus_reports_pinned_w3c_rl_rdf_signed_zero_datatype_conflict :: proc(t: ^testing.T) {
+	// The source test is expressed only in Functional Syntax. This normalized
+	// RDF projection isolates its W3C RL/RDF rule interaction: dt-diff for the
+	// two distinct float values, prp-fp, and eq-diff1.
+	run_generalized_datatype_checked_fixture(t, "reasoner/owlrl/testdata/w3c-plus-minus-zero.input.nt", .Same_As_Different_From)
+}
+
+@(test)
+test_fixture_corpus_reports_pinned_w3c_rl_rdf_functionality_datatype_conflict :: proc(t: ^testing.T) {
+	// The archive cases exercise functional data-property collision over distinct
+	// integer and string values. They require generalized literal-subject heads.
+	run_generalized_datatype_checked_fixture(t, "reasoner/owlrl/testdata/w3c-functionality-clash.input.nt", .Same_As_Different_From)
+	run_generalized_datatype_checked_fixture(t, "reasoner/owlrl/testdata/w3c-keys-006.input.nt", .Same_As_Different_From)
+}
+
+@(test)
+test_fixture_corpus_reports_pinned_w3c_rl_rdf_datatype_range_conflict :: proc(t: ^testing.T) {
+	// This source case requires an invalid value inferred into an xsd:integer
+	// range, so its dt-not-type conclusion needs generalized literal-subject heads.
+	run_generalized_datatype_checked_fixture(t, "reasoner/owlrl/testdata/w3c-string-integer-clash.input.nt", .Datatype_Not_Type)
 }
 
 @(test)

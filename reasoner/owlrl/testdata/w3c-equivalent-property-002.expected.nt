@@ -1,0 +1,2 @@
+<http://www.w3.org/2002/03owlt/equivalentProperty/premises002#hasHead> <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://www.w3.org/2002/03owlt/equivalentProperty/premises002#hasLeader> .
+<http://www.w3.org/2002/03owlt/equivalentProperty/premises002#hasLeader> <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://www.w3.org/2002/03owlt/equivalentProperty/premises002#hasHead> .

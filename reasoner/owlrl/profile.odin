@@ -74,6 +74,20 @@ OWL_RL_CLS_THING         :: rule.Rule_ID(163)
 OWL_RL_CLS_NOTHING1      :: rule.Rule_ID(164)
 OWL_RL_SCM_INT           :: rule.Rule_ID(165)
 OWL_RL_SCM_UNI           :: rule.Rule_ID(166)
+// OWL 2 RDF-Based semantics requires owl:differentFrom to be symmetric. This
+// semantic closure supplement is deliberately separate from the numbered RL
+// rule table, whose eq-diff rules only detect contradictions.
+OWL_RDF_DIFFERENT_FROM_SYMMETRY :: rule.Rule_ID(167)
+// Exact immediate XML Schema numeric-derived-type hierarchy edges used by
+// RDF-Based datatype semantics. Transitivity is supplied by RDFS Core.
+OWL_RDF_NUMERIC_DATATYPE_SUBCLASS :: rule.Rule_ID(168)
+// A bounded RDF-Based reflexivity supplement for explicitly declared named
+// individuals. It is intentionally not a claim over every resource in the
+// active graph, unlike the unrestricted OWL model-theoretic property axiom.
+OWL_RDF_NAMED_REFLEXIVE_PROPERTY :: rule.Rule_ID(169)
+// The RDF-Based semantic counterpart of a two-step self property chain: a
+// declaration P o P subPropertyOf P entails that P is transitive.
+OWL_RDF_PROPERTY_CHAIN_TRANSITIVE :: rule.Rule_ID(170)
 
 OWL_EQUIVALENT_CLASS    :: "http://www.w3.org/2002/07/owl#equivalentClass"
 OWL_EQUIVALENT_PROPERTY :: "http://www.w3.org/2002/07/owl#equivalentProperty"
@@ -93,6 +107,7 @@ OWL_DISJOINT_WITH         :: "http://www.w3.org/2002/07/owl#disjointWith"
 OWL_PROPERTY_DISJOINT_WITH :: "http://www.w3.org/2002/07/owl#propertyDisjointWith"
 OWL_IRREFLEXIVE_PROPERTY  :: "http://www.w3.org/2002/07/owl#IrreflexiveProperty"
 OWL_ASYMMETRIC_PROPERTY   :: "http://www.w3.org/2002/07/owl#AsymmetricProperty"
+OWL_REFLEXIVE_PROPERTY    :: "http://www.w3.org/2002/07/owl#ReflexiveProperty"
 OWL_ONE_OF                :: "http://www.w3.org/2002/07/owl#oneOf"
 OWL_INTERSECTION_OF       :: "http://www.w3.org/2002/07/owl#intersectionOf"
 OWL_UNION_OF              :: "http://www.w3.org/2002/07/owl#unionOf"
@@ -113,6 +128,7 @@ OWL_CLASS                 :: "http://www.w3.org/2002/07/owl#Class"
 OWL_NOTHING               :: "http://www.w3.org/2002/07/owl#Nothing"
 OWL_OBJECT_PROPERTY       :: "http://www.w3.org/2002/07/owl#ObjectProperty"
 OWL_DATATYPE_PROPERTY     :: "http://www.w3.org/2002/07/owl#DatatypeProperty"
+OWL_NAMED_INDIVIDUAL      :: "http://www.w3.org/2002/07/owl#NamedIndividual"
 OWL_HAS_KEY               :: "http://www.w3.org/2002/07/owl#hasKey"
 OWL_MAX_CARDINALITY       :: "http://www.w3.org/2002/07/owl#maxCardinality"
 OWL_MAX_QUALIFIED_CARDINALITY :: "http://www.w3.org/2002/07/owl#maxQualifiedCardinality"
@@ -158,6 +174,7 @@ Terms :: struct {
 	property_disjoint_with: term.Term_ID,
 	irreflexive_property: term.Term_ID,
 	asymmetric_property:  term.Term_ID,
+	reflexive_property:   term.Term_ID,
 	rdf_first:            term.Term_ID,
 	rdf_rest:             term.Term_ID,
 	rdf_nil:              term.Term_ID,
@@ -182,6 +199,7 @@ Terms :: struct {
 	owl_nothing:          term.Term_ID,
 	object_property:      term.Term_ID,
 	datatype_property:    term.Term_ID,
+	named_individual:     term.Term_ID,
 	has_key:              term.Term_ID,
 	max_cardinality:      term.Term_ID,
 	zero_cardinality:     term.Term_ID,
@@ -210,15 +228,16 @@ error_message :: proc(code: Error_Code) -> string {
 	head: [1]rule.Triple_Template,
 }
 
-// Profile owns a combined one-hundred-rule table: RDFS Core plus ninety-four
-// static instances of fifty-five documented OWL 2 RL directions. prp-ap has
-// nine zero-body instances and dt-type1 has thirty-two, one per W3C resource.
+// Profile owns a combined one-hundred-and-sixteen-rule table: RDFS Core plus
+// ninety-four static instances of fifty-five documented OWL 2 RL directions,
+// and sixteen RDF-Based semantic supplement instances. prp-ap has nine
+// zero-body instances and dt-type1 has thirty-two, one per W3C resource.
 // Do not copy it after init because Rule slices borrow embedded definitions.
 Profile :: struct {
 	rdfs:         rdfs.Profile,
 	terms:        Terms,
-	definitions:  [94]Definition,
-	rules:        [100]rule.Rule,
+	definitions:  [110]Definition,
+	rules:        [116]rule.Rule,
 	materializer: rule.Materializer,
 	closure_provenance: Closure_Provenance,
 	initialized:  bool,
@@ -325,7 +344,7 @@ Profile :: struct {
 // initializing the composed RDFS profile. This prevents a term-limit error
 // from leaving a partially admitted OWL RL vocabulary batch.
 init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Error_Code) {
-	base_values := [63]rdf.Term{
+	base_values := [65]rdf.Term{
 		rdf.iri(rdfs.RDF_TYPE), rdf.iri(rdfs.RDFS_SUBCLASS), rdf.iri(rdfs.RDFS_SUBPROPERTY),
 		rdf.iri(rdfs.RDFS_DOMAIN_IRI), rdf.iri(rdfs.RDFS_RANGE_IRI),
 		rdf.iri(OWL_EQUIVALENT_CLASS), rdf.iri(OWL_EQUIVALENT_PROPERTY), rdf.iri(OWL_INVERSE_OF),
@@ -356,12 +375,13 @@ init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Erro
 		rdf.iri(OWL_ANNOTATION_PROPERTY),
 		rdf.iri(RDFS_LABEL), rdf.iri(RDFS_COMMENT), rdf.iri(RDFS_SEE_ALSO), rdf.iri(RDFS_IS_DEFINED_BY),
 		rdf.iri(OWL_DEPRECATED), rdf.iri(OWL_VERSION_INFO), rdf.iri(OWL_PRIOR_VERSION), rdf.iri(OWL_BACKWARD_COMPATIBLE_WITH), rdf.iri(OWL_INCOMPATIBLE_WITH),
+		rdf.iri(OWL_REFLEXIVE_PROPERTY), rdf.iri(OWL_NAMED_INDIVIDUAL),
 	}
-	values: [96]rdf.Term
+	values: [98]rdf.Term
 	for value, value_index in base_values do values[value_index] = value
-	values[63] = rdf.iri(RDFS_DATATYPE)
-	for datatype_iri, datatype_index in rdf.OWL_RL_DATATYPE_IRIS do values[64 + datatype_index] = rdf.iri(datatype_iri)
-	ids: [96]term.Term_ID
+	values[65] = rdf.iri(RDFS_DATATYPE)
+	for datatype_iri, datatype_index in rdf.OWL_RL_DATATYPE_IRIS do values[66 + datatype_index] = rdf.iri(datatype_iri)
+	ids: [98]term.Term_ID
 	if store_error := store.intern_terms(target, values[:], ids[:]); store_error != .None do return .Store_Error, store_error
 	rdfs_error, nested_store_error := rdfs.init(&profile.rdfs, target)
 	if rdfs_error != .None do return .RDFS_Error, nested_store_error
@@ -389,6 +409,7 @@ init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Erro
 		property_disjoint_with = ids[20],
 		irreflexive_property = ids[21],
 		asymmetric_property = ids[22],
+		reflexive_property = ids[63],
 		rdf_first = ids[23],
 		rdf_rest = ids[24],
 		rdf_nil = ids[25],
@@ -412,6 +433,7 @@ init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Erro
 		owl_nothing = ids[43],
 		object_property = ids[44],
 		datatype_property = ids[45],
+		named_individual = ids[64],
 		has_key = ids[46],
 		distinct_members = ids[47],
 		max_cardinality = ids[48],
@@ -421,9 +443,9 @@ init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Erro
 		on_class = ids[52],
 		annotation_property = ids[53],
 		annotation_properties = {ids[54], ids[55], ids[56], ids[57], ids[58], ids[59], ids[60], ids[61], ids[62]},
-		rdfs_datatype = ids[63],
+		rdfs_datatype = ids[65],
 	}
-	for datatype_index in 0..<len(profile.terms.owl_rl_datatypes) do profile.terms.owl_rl_datatypes[datatype_index] = ids[64 + datatype_index]
+	for datatype_index in 0..<len(profile.terms.owl_rl_datatypes) do profile.terms.owl_rl_datatypes[datatype_index] = ids[66 + datatype_index]
 	base_rules := rdfs.rule_set(&profile.rdfs)
 	for index in 0..<len(base_rules) do profile.rules[index] = base_rules[index]
 	c1, c2, x, p1, p2, y :=
@@ -594,6 +616,42 @@ init :: proc(profile: ^Profile, target: ^store.Store) -> (Error_Code, store.Erro
 		{rule.constant(profile.terms.owl_thing), rule.constant(profile.terms.rdf_type), rule.constant(profile.terms.owl_class)})
 	set_zero_rule(profile, 99, OWL_RL_CLS_NOTHING1,
 		{rule.constant(profile.terms.owl_nothing), rule.constant(profile.terms.rdf_type), rule.constant(profile.terms.owl_class)})
+	set_one_rule(profile, 100, OWL_RDF_DIFFERENT_FROM_SYMMETRY,
+		{rule.variable(x), rule.constant(profile.terms.different_from), rule.variable(y)},
+		{rule.variable(y), rule.constant(profile.terms.different_from), rule.variable(x)})
+	decimal := profile.terms.owl_rl_datatypes[3]
+	integer := profile.terms.owl_rl_datatypes[4]
+	non_negative := profile.terms.owl_rl_datatypes[5]
+	non_positive := profile.terms.owl_rl_datatypes[6]
+	positive := profile.terms.owl_rl_datatypes[7]
+	negative := profile.terms.owl_rl_datatypes[8]
+	long := profile.terms.owl_rl_datatypes[9]
+	integer32 := profile.terms.owl_rl_datatypes[10]
+	short := profile.terms.owl_rl_datatypes[11]
+	byte := profile.terms.owl_rl_datatypes[12]
+	unsigned_long := profile.terms.owl_rl_datatypes[13]
+	unsigned_integer32 := profile.terms.owl_rl_datatypes[14]
+	unsigned_short := profile.terms.owl_rl_datatypes[15]
+	unsigned_byte := profile.terms.owl_rl_datatypes[16]
+	set_zero_rule(profile, 101, OWL_RDF_NUMERIC_DATATYPE_SUBCLASS, {rule.constant(integer), rule.constant(profile.terms.subclass_of), rule.constant(decimal)})
+	set_zero_rule(profile, 102, OWL_RDF_NUMERIC_DATATYPE_SUBCLASS, {rule.constant(non_negative), rule.constant(profile.terms.subclass_of), rule.constant(integer)})
+	set_zero_rule(profile, 103, OWL_RDF_NUMERIC_DATATYPE_SUBCLASS, {rule.constant(non_positive), rule.constant(profile.terms.subclass_of), rule.constant(integer)})
+	set_zero_rule(profile, 104, OWL_RDF_NUMERIC_DATATYPE_SUBCLASS, {rule.constant(positive), rule.constant(profile.terms.subclass_of), rule.constant(non_negative)})
+	set_zero_rule(profile, 105, OWL_RDF_NUMERIC_DATATYPE_SUBCLASS, {rule.constant(negative), rule.constant(profile.terms.subclass_of), rule.constant(non_positive)})
+	set_zero_rule(profile, 106, OWL_RDF_NUMERIC_DATATYPE_SUBCLASS, {rule.constant(long), rule.constant(profile.terms.subclass_of), rule.constant(integer)})
+	set_zero_rule(profile, 107, OWL_RDF_NUMERIC_DATATYPE_SUBCLASS, {rule.constant(integer32), rule.constant(profile.terms.subclass_of), rule.constant(long)})
+	set_zero_rule(profile, 108, OWL_RDF_NUMERIC_DATATYPE_SUBCLASS, {rule.constant(short), rule.constant(profile.terms.subclass_of), rule.constant(integer32)})
+	set_zero_rule(profile, 109, OWL_RDF_NUMERIC_DATATYPE_SUBCLASS, {rule.constant(byte), rule.constant(profile.terms.subclass_of), rule.constant(short)})
+	set_zero_rule(profile, 110, OWL_RDF_NUMERIC_DATATYPE_SUBCLASS, {rule.constant(unsigned_long), rule.constant(profile.terms.subclass_of), rule.constant(non_negative)})
+	set_zero_rule(profile, 111, OWL_RDF_NUMERIC_DATATYPE_SUBCLASS, {rule.constant(unsigned_integer32), rule.constant(profile.terms.subclass_of), rule.constant(unsigned_long)})
+	set_zero_rule(profile, 112, OWL_RDF_NUMERIC_DATATYPE_SUBCLASS, {rule.constant(unsigned_short), rule.constant(profile.terms.subclass_of), rule.constant(unsigned_integer32)})
+	set_zero_rule(profile, 113, OWL_RDF_NUMERIC_DATATYPE_SUBCLASS, {rule.constant(unsigned_byte), rule.constant(profile.terms.subclass_of), rule.constant(unsigned_short)})
+	set_two_rule(profile, 114, OWL_RDF_NAMED_REFLEXIVE_PROPERTY,
+		{{rule.variable(p1), rule.constant(profile.terms.rdf_type), rule.constant(profile.terms.reflexive_property)}, {rule.variable(x), rule.constant(profile.terms.rdf_type), rule.constant(profile.terms.named_individual)}},
+		{rule.variable(x), rule.variable(p1), rule.variable(x)})
+	set_five_rule(profile, 115, OWL_RDF_PROPERTY_CHAIN_TRANSITIVE,
+		{{rule.variable(p1), rule.constant(profile.terms.property_chain_axiom), rule.variable(c1)}, {rule.variable(c1), rule.constant(profile.terms.rdf_first), rule.variable(p1)}, {rule.variable(c1), rule.constant(profile.terms.rdf_rest), rule.variable(c2)}, {rule.variable(c2), rule.constant(profile.terms.rdf_first), rule.variable(p1)}, {rule.variable(c2), rule.constant(profile.terms.rdf_rest), rule.constant(profile.terms.rdf_nil)}},
+		{rule.variable(p1), rule.constant(profile.terms.rdf_type), rule.constant(profile.terms.transitive_property)})
 	rule.init(&profile.materializer)
 	init_closure_provenance(&profile.closure_provenance)
 	profile.initialized = true

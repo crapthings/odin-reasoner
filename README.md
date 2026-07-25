@@ -55,6 +55,9 @@ See the [RDFS conformance ledger](reasoner/rdfs/conformance-ledger.md) and the
 [OWL profile](reasoner/owlrl/profile.md) for the exact rule surface. The
 [OWL conformance ledger](reasoner/owlrl/conformance-ledger.md) maps every
 implemented OWL direction to its local gate and declared boundary.
+The [W3C Profile-RL matrix](reasoner/owlrl/w3c-profile-rl-matrix.md) separately
+records which official RDF-Based cases are executable evidence and which
+remaining cases are outside the current bounded-rule contract.
 The [OWL fixture corpus](reasoner/owlrl/testdata/README.md) adds parser-to-store
 scenarios for cross-rule closure, checked conflicts, and transactional failures.
 
