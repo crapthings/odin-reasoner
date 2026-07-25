@@ -1,0 +1,3 @@
+<urn:w3c:New-Feature-DisjointObjectProperties-001#hasFather> <http://www.w3.org/2002/07/owl#propertyDisjointWith> <urn:w3c:New-Feature-DisjointObjectProperties-001#hasMother> .
+<urn:w3c:New-Feature-DisjointObjectProperties-001#Stewie> <urn:w3c:New-Feature-DisjointObjectProperties-001#hasFather> <urn:w3c:New-Feature-DisjointObjectProperties-001#Peter> .
+<urn:w3c:New-Feature-DisjointObjectProperties-001#Stewie> <urn:w3c:New-Feature-DisjointObjectProperties-001#hasMother> <urn:w3c:New-Feature-DisjointObjectProperties-001#Lois> .

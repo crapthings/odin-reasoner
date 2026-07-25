@@ -1,0 +1,3 @@
+<urn:w3c:New-Feature-DisjointObjectProperties-002#Peter> <http://www.w3.org/2002/07/owl#differentFrom> <urn:w3c:New-Feature-DisjointObjectProperties-002#Lois> .
+<urn:w3c:New-Feature-DisjointObjectProperties-002#Peter> <http://www.w3.org/2002/07/owl#differentFrom> <urn:w3c:New-Feature-DisjointObjectProperties-002#StewieJr> .
+<urn:w3c:New-Feature-DisjointObjectProperties-002#Lois> <http://www.w3.org/2002/07/owl#differentFrom> <urn:w3c:New-Feature-DisjointObjectProperties-002#StewieJr> .

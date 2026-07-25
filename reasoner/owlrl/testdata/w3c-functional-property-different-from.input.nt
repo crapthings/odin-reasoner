@@ -1,0 +1,4 @@
+<urn:w3c:owl2-rl-rules-fp-differentFrom#fp> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#FunctionalProperty> .
+<urn:w3c:owl2-rl-rules-fp-differentFrom#Y2> <urn:w3c:owl2-rl-rules-fp-differentFrom#fp> <urn:w3c:owl2-rl-rules-fp-differentFrom#X2> .
+<urn:w3c:owl2-rl-rules-fp-differentFrom#X1> <http://www.w3.org/2002/07/owl#differentFrom> <urn:w3c:owl2-rl-rules-fp-differentFrom#X2> .
+<urn:w3c:owl2-rl-rules-fp-differentFrom#Y1> <urn:w3c:owl2-rl-rules-fp-differentFrom#fp> <urn:w3c:owl2-rl-rules-fp-differentFrom#X1> .

@@ -5,8 +5,8 @@ import store "../store"
 
 // Materialize_All_Options bounds one complete supported OWL RL closure. The
 // derivation and round bounds apply across static rules and every dynamic RDF
-// list phase. max_list_items applies to each decoded collection; zero disables
-// an individual bound. max_path_states applies to one property-chain frontier.
+// list phase. max_list_items applies to each decoded collection, including
+// owl:AllDisjointProperties; zero disables an individual bound. max_path_states applies to one property-chain frontier.
 // generalized_heads enables W3C generalized-RDF conclusions throughout the
 // static and dynamic phases; strict RDF remains the default.
 Materialize_All_Options :: struct {
@@ -64,7 +64,8 @@ Materialize_All_Result :: struct {
 }
 
 // materialize_all reaches one transactional fixpoint across the profile's
-// static RDFS/OWL rules and its supported numeric range-intersection, oneOf,
+// static RDFS/OWL rules and its supported numeric range-intersection,
+// property-disjoint difference, functional-property difference, oneOf,
 // intersectionOf, unionOf, propertyChainAxiom, and hasKey phases. The existing focused materializers remain useful
 // for isolating one rule family; this is the complete supported closure entry
 // point. It also stages first-support closure provenance for static and list
@@ -145,6 +146,39 @@ materialize_all :: proc(profile: ^Profile, target: ^store.Store, options: Materi
 		}
 		result.inferred_facts += numeric_range_added
 		phase_added += numeric_range_added
+
+		remaining = remaining_derivations(options.max_derivations, result.inferred_facts)
+		disjoint_difference_added, disjoint_difference_error, disjoint_difference_list_error, disjoint_difference_store_error := emit_disjoint_property_differences(profile, &work, options.max_list_items, remaining, options.generalized_heads, &staged_provenance)
+		if disjoint_difference_error != .None {
+			if disjoint_difference_error == .Rule_Error {
+				result.error = .Rule_Error
+				result.rule_error = .Max_Derivations
+			} else if disjoint_difference_error == .List_Error {
+				result.error = .List_Error
+				result.list_error = disjoint_difference_list_error
+			} else {
+				result.error = disjoint_difference_error == .Out_Of_Memory ? .Out_Of_Memory : .Store_Error
+				result.store_error = disjoint_difference_store_error
+			}
+			return result
+		}
+		result.inferred_facts += disjoint_difference_added
+		phase_added += disjoint_difference_added
+
+		remaining = remaining_derivations(options.max_derivations, result.inferred_facts)
+		functional_difference_added, functional_difference_error, functional_difference_store_error := emit_functional_property_differences(profile, &work, remaining, options.generalized_heads, &staged_provenance)
+		if functional_difference_error != .None {
+			if functional_difference_error == .Rule_Error {
+				result.error = .Rule_Error
+				result.rule_error = .Max_Derivations
+			} else {
+				result.error = functional_difference_error == .Out_Of_Memory ? .Out_Of_Memory : .Store_Error
+				result.store_error = functional_difference_store_error
+			}
+			return result
+		}
+		result.inferred_facts += functional_difference_added
+		phase_added += functional_difference_added
 
 		remaining = remaining_derivations(options.max_derivations, result.inferred_facts)
 		one_of_added, one_of_error, one_of_list_error, one_of_store_error := emit_one_of(profile, &work, one_of_options, remaining, &staged_provenance)
