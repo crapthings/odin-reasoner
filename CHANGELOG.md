@@ -5,6 +5,18 @@ new capabilities may require a minor version and callers should pin releases.
 
 ## Unreleased
 
+## 0.5.0 - 2026-07-25
+
+- Add a bounded RDF-Based numeric range-intersection supplement: two
+  nonempty, modeled integer datatype ranges on the same property can entail a
+  named range containing their intersection. Pin W3C `WebOnt-I5.8-008` and
+  `WebOnt-I5.8-009`, raising the offline approved RDF-Based fixture selection
+  from 24 to 26 cases.
+- Require the matching `odin-rdf` `v0.32.0` integer-interval behavior in CI.
+  The new closure stays deliberately conservative: empty intersections and
+  decimal, float, double, and unmodeled datatype families produce no range
+  inference.
+
 ## 0.4.0 - 2026-07-25
 
 - Add an offline, pinned W3C RDF-Based OWL 2 RL regression corpus with
