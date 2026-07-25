@@ -5,6 +5,21 @@ new capabilities may require a minor version and callers should pin releases.
 
 ## Unreleased
 
+## 0.4.0 - 2026-07-25
+
+- Add an offline, pinned W3C RDF-Based OWL 2 RL regression corpus with
+  twenty-four rule-relevant fixtures and a complete current-scope matrix for
+  the remaining approved archive cases. The suite is evidence for the bounded
+  forward closure, not a claim of complete OWL entailment.
+- Extend the documented RDF-Based supplement surface with `owl:differentFrom`
+  symmetry, the exact numeric datatype hierarchy, explicit named-individual
+  reflexive-property closure, and a two-step self property-chain transitivity
+  consequence. Strict RDF remains the default, and generalized datatype heads
+  remain opt-in.
+- Require the `odin-rdf` `v0.31.2` data-value identity behavior in CI so
+  signed-zero and string-to-numeric datatype contradictions are tested against
+  the matching dependency revision.
+
 ## 0.3.0 - 2026-07-24
 
 - Add `adapter/sparql.adopt_store`, which transfers a finished reasoner Store
