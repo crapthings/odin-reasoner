@@ -85,12 +85,15 @@ skipped passes.
 
 ## Next acceptance work
 
-1. Keep the 24 executable gates green and only promote a newly added archive
+1. Keep the 26 executable gates green and only promote a newly added archive
    case after its complete source conclusion or contradiction is represented by
    a checked-in, rule-relevant fixture.
 2. Treat the five classified boundary families above as separate capability
-   projects: model witnesses, complete datatype intersections, ontology
-   document processing, and full class-expression semantics must not be
-   introduced implicitly through a local rule patch.
-3. For the next bounded-reasoner increment, choose a missing W3C RL/RDF table
-   direction rather than broadening any of these excluded semantic families.
+   projects: model witnesses for negative entailment, ontology-document
+   processing, profile-validity analysis, full class-expression semantics, and
+   description-logic inconsistency must not be introduced implicitly through a
+   local rule patch.
+3. No ordinary W3C RL/RDF rule-table direction remains unimplemented in this
+   bounded profile. The next increment must explicitly choose one of the
+   boundary capabilities above rather than presenting a semantic supplement as
+   full OWL conformance.
