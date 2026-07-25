@@ -1,0 +1,3 @@
+<http://www.w3.org/2002/03owlt/I4.6/nonconclusions004#C1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<http://www.w3.org/2002/03owlt/I4.6/nonconclusions004#C2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<http://www.w3.org/2002/03owlt/I4.6/nonconclusions004#C1> <http://www.w3.org/2002/07/owl#equivalentClass> <http://www.w3.org/2002/03owlt/I4.6/nonconclusions004#C2> .

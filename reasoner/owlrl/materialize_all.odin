@@ -65,7 +65,8 @@ Materialize_All_Result :: struct {
 
 // materialize_all reaches one transactional fixpoint across the profile's
 // static RDFS/OWL rules and its supported numeric range-intersection,
-// property-disjoint difference, functional-property difference, oneOf,
+// property-disjoint difference, functional-property difference, bounded
+// complement-class witnesses, oneOf,
 // intersectionOf, unionOf, propertyChainAxiom, and hasKey phases. The existing focused materializers remain useful
 // for isolating one rule family; this is the complete supported closure entry
 // point. It also stages first-support closure provenance for static and list
@@ -179,6 +180,40 @@ materialize_all :: proc(profile: ^Profile, target: ^store.Store, options: Materi
 		}
 		result.inferred_facts += functional_difference_added
 		phase_added += functional_difference_added
+
+		remaining = remaining_derivations(options.max_derivations, result.inferred_facts)
+		complement_added := 0
+		complement_error, complement_list_error, complement_store_error := emit_disjoint_class_complements(profile, &work, options.max_list_items, remaining, &complement_added, options.generalized_heads, &staged_provenance)
+		if complement_error != .None {
+			if complement_error == .Rule_Error { result.error = .Rule_Error; result.rule_error = .Max_Derivations
+			} else if complement_error == .List_Error { result.error = .List_Error; result.list_error = complement_list_error
+			} else { result.error = complement_error == .Out_Of_Memory ? .Out_Of_Memory : .Store_Error; result.store_error = complement_store_error }
+			return result
+		}
+		result.inferred_facts += complement_added
+		phase_added += complement_added
+
+		remaining = remaining_derivations(options.max_derivations, result.inferred_facts)
+		qcr_complement_added := 0
+		qcr_complement_error, qcr_complement_store_error := emit_max_qualified_cardinality_complements(profile, &work, remaining, &qcr_complement_added, options.generalized_heads, &staged_provenance)
+		if qcr_complement_error != .None {
+			if qcr_complement_error == .Rule_Error { result.error = .Rule_Error; result.rule_error = .Max_Derivations
+			} else { result.error = qcr_complement_error == .Out_Of_Memory ? .Out_Of_Memory : .Store_Error; result.store_error = qcr_complement_store_error }
+			return result
+		}
+		result.inferred_facts += qcr_complement_added
+		phase_added += qcr_complement_added
+
+		remaining = remaining_derivations(options.max_derivations, result.inferred_facts)
+		expression_added := 0
+		expression_error, expression_store_error := emit_expression_comprehension(profile, &work, remaining, &expression_added, options.generalized_heads, &staged_provenance)
+		if expression_error != .None {
+			if expression_error == .Rule_Error { result.error = .Rule_Error; result.rule_error = .Max_Derivations
+			} else { result.error = expression_error == .Out_Of_Memory ? .Out_Of_Memory : .Store_Error; result.store_error = expression_store_error }
+			return result
+		}
+		result.inferred_facts += expression_added
+		phase_added += expression_added
 
 		remaining = remaining_derivations(options.max_derivations, result.inferred_facts)
 		one_of_added, one_of_error, one_of_list_error, one_of_store_error := emit_one_of(profile, &work, one_of_options, remaining, &staged_provenance)

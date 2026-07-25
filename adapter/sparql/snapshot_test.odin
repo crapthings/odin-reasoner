@@ -2,6 +2,8 @@ package sparql_adapter
 
 import "core:testing"
 import rdf "odin-rdf:rdf"
+import importer "../../reasoner/import"
+import owlrl "../../reasoner/owlrl"
 import rdfs "../../reasoner/rdfs"
 import rule "../../reasoner/rule"
 import store "../../reasoner/store"
@@ -13,6 +15,17 @@ import engine "odin-sparql:sparql/engine"
 	added, error := store.insert_triple(target, triple)
 	testing.expect(t, added)
 	testing.expect_value(t, error, store.Error_Code.None)
+}
+
+@(private) W3C_Import_Resolver :: struct {
+	iri:      string,
+	document: string,
+}
+
+@(private) resolve_w3c_import :: proc(iri: string, user_data: rawptr) -> (string, bool) {
+	state := cast(^W3C_Import_Resolver)user_data
+	if state == nil || iri != state.iri do return "", false
+	return state.document, true
 }
 
 @(private) run :: proc(t: ^testing.T, text: string, view: dataset.View) -> engine.Result {
@@ -156,6 +169,67 @@ test_adopted_store_snapshot_queries_materialized_rdfs_closure :: proc(t: ^testin
 	person, bound, valid := engine.Cell(&result, 0, 0)
 	testing.expect(t, valid && bound)
 	testing.expect_value(t, person.value, "urn:ada")
+}
+
+@(test)
+test_indexed_view_and_adopted_snapshot_query_materialized_owlrl_closure :: proc(t: ^testing.T) {
+	source: store.Store
+	testing.expect_value(t, store.init(&source), store.Error_Code.None)
+	profile: owlrl.Profile
+	profile_error, store_error := owlrl.init(&profile, &source)
+	testing.expect_value(t, profile_error, owlrl.Error_Code.None)
+	testing.expect_value(t, store_error, store.Error_Code.None)
+	add(t, &source, {rdf.iri("urn:parentOf"), rdf.iri(owlrl.OWL_INVERSE_OF), rdf.iri("urn:childOf")})
+	add(t, &source, {rdf.iri("urn:ada"), rdf.iri("urn:parentOf"), rdf.iri("urn:bert")})
+	materialized := owlrl.materialize_all(&profile, &source)
+	testing.expect_value(t, materialized.error, owlrl.Materialize_All_Error_Code.None)
+	owlrl.destroy(&profile)
+
+	query := `SELECT ?child WHERE { ?child <urn:childOf> <urn:ada> }`
+	live_result := run(t, query, indexed_view(&source))
+	defer engine.destroy(&live_result)
+	testing.expect_value(t, engine.Row_Count(&live_result), 1)
+	live_child, live_bound, live_valid := engine.Cell(&live_result, 0, 0)
+	testing.expect(t, live_valid && live_bound)
+	testing.expect_value(t, live_child.value, "urn:bert")
+
+	snapshot: Snapshot
+	adopt_store(&snapshot, &source)
+	defer destroy(&snapshot)
+	testing.expect_value(t, store.fact_count(&source), 0)
+	snapshot_result := run(t, query, view(&snapshot))
+	defer engine.destroy(&snapshot_result)
+	testing.expect_value(t, engine.Row_Count(&snapshot_result), 1)
+	snapshot_child, snapshot_bound, snapshot_valid := engine.Cell(&snapshot_result, 0, 0)
+	testing.expect(t, snapshot_valid && snapshot_bound)
+	testing.expect_value(t, snapshot_child.value, live_child.value)
+}
+
+@(test)
+test_adopted_snapshot_queries_w3c_import_closure_entailment :: proc(t: ^testing.T) {
+	root_document := `<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" xmlns:owl="http://www.w3.org/2002/07/owl#" xmlns:ont="http://www.w3.org/2002/03owlt/imports/support011-A#" xml:base="http://www.w3.org/2002/03owlt/imports/premises011"><owl:Ontology rdf:about=""><owl:imports rdf:resource="http://www.w3.org/2002/03owlt/imports/support011-A"/></owl:Ontology><ont:Man rdf:about="http://example.org/data#Socrates"/></rdf:RDF>`
+	imported_document := `<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" xmlns:owl="http://www.w3.org/2002/07/owl#" xml:base="http://www.w3.org/2002/03owlt/imports/support011-A"><owl:Ontology rdf:about=""/><owl:Class rdf:ID="Man"><rdfs:subClassOf rdf:resource="#Mortal"/></owl:Class><owl:Class rdf:ID="Mortal"/></rdf:RDF>`
+	resolver := W3C_Import_Resolver{iri = "http://www.w3.org/2002/03owlt/imports/support011-A", document = imported_document}
+	source: store.Store
+	testing.expect_value(t, store.init(&source), store.Error_Code.None)
+	loaded := importer.load_rdfxml_import_closure(root_document, &source, resolve_w3c_import, {root_iri = "http://www.w3.org/2002/03owlt/imports/premises011"}, &resolver)
+	testing.expect_value(t, loaded.error, importer.Import_Error_Code.None)
+	testing.expect_value(t, loaded.documents, 2)
+	profile: owlrl.Profile
+	profile_error, store_error := owlrl.init(&profile, &source)
+	testing.expect_value(t, profile_error, owlrl.Error_Code.None)
+	testing.expect_value(t, store_error, store.Error_Code.None)
+	materialized := owlrl.materialize_all(&profile, &source)
+	testing.expect_value(t, materialized.error, owlrl.Materialize_All_Error_Code.None)
+	owlrl.destroy(&profile)
+
+	snapshot: Snapshot
+	adopt_store(&snapshot, &source)
+	defer destroy(&snapshot)
+	result := run(t, `ASK { <http://example.org/data#Socrates> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/03owlt/imports/support011-A#Mortal> }`, view(&snapshot))
+	defer engine.destroy(&result)
+	answer, valid := engine.Ask_Value(&result)
+	testing.expect(t, valid && answer)
 }
 
 @(test)

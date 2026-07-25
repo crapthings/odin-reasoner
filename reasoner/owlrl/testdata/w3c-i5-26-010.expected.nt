@@ -1,0 +1,3 @@
+_:restriction <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Restriction> .
+_:restriction <http://www.w3.org/2002/07/owl#onProperty> <http://www.w3.org/2002/03owlt/I5.26/premises010#p> .
+_:restriction <http://www.w3.org/2002/07/owl#minCardinality> "1"^^<http://www.w3.org/2001/XMLSchema#int> .

@@ -166,20 +166,40 @@ clone :: proc(source, destination: ^Store) -> Error_Code {
 	return .None
 }
 
-// commit_inferred inserts only facts whose source origin is Inferred. It is
-// intended for a clone of destination after a successful transactional phase;
-// both stores must therefore have identical term dictionaries and Term_IDs.
-// Configured limits are checked by destination insertion and reported exactly.
+// commit_inferred commits only facts whose source origin is Inferred. source
+// must be a clone of destination whose original term-ID prefix is unchanged;
+// it may append fresh terms needed by its inferred facts. The destination is
+// replaced only after a private clone accepts every additional term and fact,
+// keeping the commit transactional even when fresh blank nodes are produced.
 commit_inferred :: proc(source, destination: ^Store) -> (added_count: int, error: Error_Code) {
-	if term_count(source) != term_count(destination) do return 0, .Invalid_Fact
+	if term_count(source) < term_count(destination) do return 0, .Invalid_Fact
+	for index in 0..<term_count(destination) {
+		destination_id, destination_term, destination_found := term_at(destination, index)
+		source_id, source_term, source_found := term_at(source, index)
+		if !destination_found || !source_found || destination_id != source_id || id_for_term(source, destination_term) != source_id || id_for_term(destination, source_term) != destination_id do return 0, .Invalid_Fact
+	}
+
+	committed: Store
+	if clone_error := clone(destination, &committed); clone_error != .None do return 0, clone_error
+	defer destroy(&committed)
+	for index in term_count(destination)..<term_count(source) {
+		source_id, source_term, source_found := term_at(source, index)
+		if !source_found { return 0, .Invalid_Fact }
+		committed_id, intern_error := intern_term(&committed, source_term)
+		if intern_error != .None { return 0, intern_error }
+		if committed_id != source_id { return 0, .Invalid_Fact }
+	}
 	for index in 0..<fact_count(source) {
 		_, fact, origin, found := fact_at(source, index)
 		if !found do return added_count, .Invalid_Fact
-		if origin != .Inferred || contains(destination, fact) do continue
-		added, insert_error := insert(destination, fact, .Inferred)
+		if origin != .Inferred || contains(&committed, fact) do continue
+		added, insert_error := insert(&committed, fact, .Inferred)
 		if insert_error != .None do return added_count, insert_error
 		if added do added_count += 1
 	}
+	destroy(destination)
+	destination^ = committed
+	committed = {}
 	return added_count, .None
 }
 

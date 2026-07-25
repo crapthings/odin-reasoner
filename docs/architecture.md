@@ -10,11 +10,32 @@ experimental internal foundations, not a general graph-store package.
 ## Ownership and identity
 
 An RDF parser sink may lend term strings only until the callback returns.
-`import.triple_sink` calls `store.insert_triple`, which calls the dictionary and
-copies every non-empty lexical field before it returns. `term.get` and
+`import.triple_sink` and the RDF/XML-oriented `import.quad_sink` call
+`store.insert_triple`, which calls the dictionary and copies every non-empty
+lexical field before it returns. `quad_sink` accepts only default-graph quads;
+it marks and stops a named-graph statement rather than silently flattening it.
+
+`import.load_rdfxml_import_closure` composes that sink with a caller-provided
+resolver for absolute `owl:imports` IRIs. Each resolved import IRI is admitted
+at most once. When the caller knows the root document's absolute IRI, it passes
+it as `Import_Options.root_iri` so a root self-import is skipped too; resolver,
+parser, named-graph, store, and document-limit failures are exposed separately.
+It never performs network I/O itself; transport, caching, and resolver policy
+remain application-owned. Admission happens in a private clone and replaces the
+provided store only after a complete success; parser, resolver, named-graph,
+store, or document-limit failures leave that store unchanged.
+
+`term.get` and
 `store.triple_for` return *borrowed* `rdf.Term`/`rdf.Triple` values: their string
 data remain valid only until `term.destroy`/`store.destroy`; callers must not
 free them and must copy them to retain them beyond that lifetime.
+
+`reasoner/functional` is a separate, bounded document adapter. It maps declared
+prefixes plus `SameIndividual` and `DifferentIndividuals` axioms to the W3C RDF
+shapes, including an `owl:AllDifferent` member list for n-ary inequality. It
+does not pretend to parse the remaining OWL Functional Syntax grammar or apply
+general annotation/document mappings. RDF/XML imports are instead available
+through the separate callback-driven import closure adapter above.
 
 Term identity is RDF term kind, lexical value, datatype, and language tag
 (ASCII case-insensitive); blank nodes additionally use both scope and label.
@@ -127,3 +148,25 @@ early-stop is successful. `Snapshot.Options.max_quads` is an optional admission
 bound for the copied form; an oversized closure returns `Quad_Limit` and
 destroys the incomplete copy. Scan terms remain borrowed until
 `sparql_adapter.destroy`.
+
+### Relationship to `Memory_Dataset`
+
+`Memory_Dataset` is the public in-memory Dataset type in `odin-sparql`, not a
+separate repository. Its current implementation owns an `odin-graph` Graph and
+supports default, named, and any-named graph scans after sealing. The reasoner
+Store deliberately remains a distinct default-graph representation because it
+owns stable term/fact IDs and asserted/inferred origin, while the surrounding
+reasoner closure retains first-derivation supports and transactional
+materialization state.
+
+The two paths are compatible at RDF-term equality and the public
+`sparql/dataset.View` query boundary, not as drop-in storage types. The
+reasoner adapter explicitly rejects named graph scans; it never flattens them.
+When a frozen Graph is needed, the optional `odin-graph` reasoner adapter can
+copy a completed closure with its origin metadata, but that is a copying
+migration boundary rather than no-copy Store adoption. The current local Garden
+integration suite exercises both the Memory_Dataset graph modes and the
+reasoner closure-to-SPARQL path, including an OWL RL `owl:inverseOf`
+entailment whose Snapshot and copied Graph queries must agree. It also runs
+W3C `WebOnt-imports-011` through local RDF/XML resolution and OWL RL closure,
+then requires the same imported-class `ASK` entailment from both views.

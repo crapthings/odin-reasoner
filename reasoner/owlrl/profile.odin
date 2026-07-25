@@ -98,6 +98,9 @@ OWL_RDF_NUMERIC_RANGE_INTERSECTION :: rule.Rule_ID(171)
 OWL_RDF_PROPERTY_DISJOINT_DIFFERENCE :: rule.Rule_ID(172)
 // These bounded RDF-Based semantic supplements preserve owl:differentFrom
 // through functional and inverse-functional property equality constraints.
+OWL_RDF_DISJOINT_CLASS_COMPLEMENT :: rule.Rule_ID(175)
+OWL_RDF_MAX_QUALIFIED_CARDINALITY_COMPLEMENT :: rule.Rule_ID(176)
+OWL_RDF_EXPRESSION_COMPREHENSION :: rule.Rule_ID(177)
 OWL_RDF_FUNCTIONAL_PROPERTY_DIFFERENCE :: rule.Rule_ID(173)
 OWL_RDF_INVERSE_FUNCTIONAL_PROPERTY_DIFFERENCE :: rule.Rule_ID(174)
 

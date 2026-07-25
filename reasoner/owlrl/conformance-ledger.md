@@ -19,8 +19,8 @@ five multi-cluster successful closures, one list-derived checked conflict, and
 two transactional materialization failures. Its expected N-Triples are required
 conclusions rather than a claim to enumerate every profile closure fact.
 
-The test suite provides authored unit and integration fixtures plus thirty-four
-external W3C semantic vectors below. The thirty-one OWL 2 vectors are normalized
+The test suite provides authored unit and integration fixtures plus seventy-one
+external W3C semantic vectors below. The sixty-eight OWL 2 vectors are normalized
 from a fixed W3C archive export; the three legacy OWL vectors are retained as
 independent regression evidence. This is still not a complete OWL 2 suite pass
 claim: the W3C Profile-RL manifest also contains conclusions that require
@@ -53,9 +53,9 @@ These are legacy W3C OWL Test Cases, not the later OWL 2 test repository. They
 provide independent regression evidence for the three listed property
 directions only; they do not claim OWL 1, OWL 2, or full OWL 2 RL conformance.
 
-`fixture_corpus_test.odin:test_fixture_corpus_materializes_supported_rule_clusters`
-and `test_fixture_corpus_reports_pinned_w3c_rl_rdf_conflicts` additionally
-run thirty-one approved RDF-Based OWL 2 RL test cases from the W3C static archive:
+`fixture_corpus_test.odin:test_fixture_corpus_materializes_supported_rule_clusters`,
+its checked-conflict gates, and `negative_entailment_test.odin` additionally
+run sixty-eight approved RDF-Based OWL 2 RL test cases from the W3C static archive:
 
 - [`New-Feature-ObjectPropertyChain-001`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf),
   which derives the declared `hasAunt` property-chain consequence (`prp-spo2`).
@@ -87,6 +87,69 @@ run thirty-one approved RDF-Based OWL 2 RL test cases from the W3C static archiv
   which reports a `prp-npa1` contradiction.
 - [`DisjointClasses-002`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf),
   which reports the `cax-dw` contradiction.
+- [`DisjointClasses-001`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf)
+  and `-003`, which construct finite blank-node witnesses for the complement
+  classes forced by binary and list-based class disjointness.
+- [`New-Feature-ObjectQCR-002`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf),
+  which constructs the complement-class witness forced when a distinct object
+  would otherwise violate a maximum qualified cardinality of one.
+- [`WebOnt-I5.26-010`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf)
+  and [`WebOnt-I5.5-005`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf),
+  which construct the finite minimum-cardinality and singleton-union witnesses
+  required by their RDF-Based comprehension conclusions.
+- [`WebOnt-I5.8-007`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf),
+  whose negative range conclusion is proven by a checked finite countermodel:
+  `-1` is in `xsd:short` but outside `xsd:unsignedByte`.
+- [`WebOnt-I4.6-004`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf),
+  whose `owl:sameAs` nonconclusion is proven by a checked two-resource model
+  with equal empty class extensions.
+- [`New-Feature-ObjectPropertyChain-BJP-004`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf),
+  whose non-transitivity conclusion is proven by a checked model satisfying
+  `p ∘ q ⊑ p` while keeping a separate non-transitive pair of `p` edges.
+- [`New-Feature-Keys-004`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf),
+  whose `owl:sameAs` nonconclusion is proven by a checked localized-key model:
+  the two typed key holders denote one class member, while the same-named
+  untyped holder remains a distinct outsider.
+- [`New-Feature-Keys-005`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf),
+  whose consistency is proven by a checked one-member localized-key model in
+  which `hasName` retains two distinct values and is therefore not functional.
+- [`WebOnt-I5.26-001`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf),
+  `-002`, and `-005`, whose consistency is proven by checked finite models
+  for the normalized structure-sharing shapes: a class expression can be used
+  as a type object and can also participate in equivalence or disjointness.
+- [`WebOnt-disjointWith-003`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf)
+  through `-009`, whose pure disjoint-class edge projections are consistent
+  under the checked finite model assigning every mentioned class an empty
+  extension.
+- [`WebOnt-description-logic-101`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf),
+  `-103`, and `-104`, whose normalized class-expression fragments are proven
+  inconsistent when an asserted instance reaches both a class and its explicit
+  `owl:complementOf` class through equivalence, intersection, and subclass
+  membership.
+- `owl2-rl-anonymous-individual`, `owl2-rl-valid-oneof`, and
+  `owl2-rl-valid-rightside-allvaluesfrom`, whose normalized RDF shapes are
+  proven semantically consistent by finite models. This deliberately does not
+  claim OWL Profile document validation for their RDF/XML serializations.
+- `FS2RDF-different-individuals-2-ar`, `FS2RDF-different-individuals-3-ar`,
+  `FS2RDF-no-builtin-prefixes-ar`, and `FS2RDF-same-individual-2-ar`, whose
+  original Functional Syntax strings are mapped through the bounded
+  `reasoner/functional` adapter. It verifies declared prefixes, adjacent
+  `owl:sameAs` links, direct binary `owl:differentFrom`, and n-ary
+  `owl:AllDifferent` member lists.
+- `New-Feature-AnnotationAnnotations-001` and
+  `New-Feature-AxiomAnnotations-001`, whose RDF/XML source shapes are imported
+  through the default-graph adapter and verify both the annotated main triple
+  and the associated `owl:Annotation` / `owl:Axiom` reification statements.
+- `WebOnt-AnnotationProperty-003`, `WebOnt-AnnotationProperty-004`,
+  `WebOnt-backwardCompatibleWith-002`, and `WebOnt-miscellaneous-303`, whose
+  RDF/XML metadata shapes verify custom annotation-property use, annotation
+  property range, ontology compatibility metadata, and Dublin Core annotation
+  property declarations through the same default-graph adapter.
+- `WebOnt-imports-011`, whose root and support RDF/XML documents are supplied
+  by a local callback resolver to `import.load_rdfxml_import_closure`. After
+  both documents are admitted, OWL RL materialization proves that `Socrates`
+  is an instance of the imported `Mortal` class. The test does not fetch the
+  network resource or claim a general ontology-document processor.
 - [`WebOnt-equivalentProperty-002`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf)
   and `-003`, which exercise `scm-eqp1` and `scm-eqp2`.
 - [`WebOnt-equivalentClass-002`](https://www.w3.org/2009/11/owl-test/profile-RL.rdf)
@@ -169,6 +232,12 @@ supplement, not the complete source ontology.
 | RDF-Based numeric range intersection | `numeric_range_intersection_test:test_numeric_range_intersection_derives_exact_named_integer_ranges`, `fixture_corpus_test:test_fixture_corpus_materializes_supported_rule_clusters` | only nonempty pairwise intersections of the exact modeled integer datatype intervals; intentionally not counted as a W3C RL/RDF table direction |
 | RDF-Based property-disjoint difference | `disjoint_property_difference_test:test_disjoint_property_difference_derives_binary_and_list_based_w3c_shapes`, `fixture_corpus_test:test_fixture_corpus_materializes_supported_rule_clusters` | binary `owl:propertyDisjointWith` and every pair in a valid `owl:AllDisjointProperties` list; infers only a difference forced by one shared endpoint, and is intentionally not counted as a W3C RL/RDF table direction |
 | RDF-Based functional-property difference | `functional_property_difference_test:test_functional_property_difference_preserves_explicit_inequality`, `fixture_corpus_test:test_fixture_corpus_materializes_supported_rule_clusters` | preserves an asserted `owl:differentFrom` through two functional or inverse-functional property assertions; intentionally not counted as a W3C RL/RDF table direction |
+| RDF-Based bounded complement-class witnesses | `fixture_corpus_test:test_fixture_corpus_materializes_supported_rule_clusters` | materializes only the anonymous `owl:complementOf` classes forced by binary/list class disjointness or max-qualified-cardinality-one plus explicit inequality; not a general class-expression reasoner |
+| RDF-Based bounded expression comprehension | `fixture_corpus_test:test_fixture_corpus_materializes_supported_rule_clusters` | materializes only the minimum-cardinality witness for an asserted object property and singleton union witness for an asserted class; generated expressions never recursively trigger this supplement |
+| RDF-Based finite countermodels | `negative_entailment_test:test_range_countermodel_proves_w3c_i5_8_007_nonentailment`, `test_class_equivalence_countermodel_proves_w3c_i4_6_004_nonentailment`, `test_property_chain_countermodel_proves_w3c_bjp_004_nonentailment`, `test_has_key_countermodel_proves_w3c_keys_004_nonentailment` | validates an explicit literal range witness, distinct equal-extension classes, a property-chain/non-transitivity witness, or a localized-key outsider witness in a normalized fragment; unsupported graphs never receive a negative verdict |
+| RDF-Based finite consistency models | `negative_entailment_test:test_has_key_consistency_model_proves_w3c_keys_005_consistency`, `test_structure_sharing_models_prove_w3c_i5_26_consistency`, `test_disjoint_class_edge_model_proves_w3c_disjoint_with_consistency` | validates a one-member localized-key model with two distinct data values, the three normalized I5.26 structure-sharing models, and pure disjoint-class edge graphs with empty class extensions; these are explicit consistency proofs, never absence-based verdicts |
+| RDF-Based complement-class contradiction proof | `negative_entailment_test:test_class_expression_proof_reports_w3c_description_logic_contradictions` | follows only explicit `equivalentClass`, nonempty `intersectionOf`, `subClassOf`, and `complementOf` membership paths from an asserted instance; reports a contradiction only upon reaching both complementary classes |
+| RDF-Based RL-profile-shape consistency models | `negative_entailment_test:test_profile_shape_models_prove_w3c_rl_consistency_semantics` | validates only the RDF semantic shapes for an anonymous individual assertion, two-member `oneOf` subclass, and right-side `allValuesFrom` restriction; it does not parse or validate OWL Profile documents |
 | RDF-Based named-individual reflexivity | `profile_test:test_rdf_based_reflexive_property_closes_explicit_named_individuals`, `fixture_corpus_test:test_fixture_corpus_materializes_supported_rule_clusters` | `owl:NamedIndividual` subset only; intentionally not counted as a W3C RL/RDF table direction or a full-domain reflexivity claim |
 | RDF-Based self-chain transitivity | `fixture_corpus_test:test_fixture_corpus_materializes_supported_rule_clusters` | exact two-item `P, P` chain only; intentionally not counted as a W3C RL/RDF rule-table direction |
 | `prp-fp`, `prp-ifp` / 137–138 | `profile_test:test_functional_properties_derive_equality_and_replacement`, `test_functional_property_skips_literal_subject_equality_head` | literal equality heads are omitted |

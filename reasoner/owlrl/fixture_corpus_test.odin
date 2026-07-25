@@ -2,9 +2,11 @@ package owlrl
 
 import "core:os"
 import "core:testing"
+import rdf "odin-rdf:rdf"
 import ntriples "odin-rdf:rdf/ntriples"
 import importer "../import"
 import store "../store"
+import term "../term"
 
 @(private) Corpus_Case :: struct {
 	input_path:    string,
@@ -35,16 +37,115 @@ import store "../store"
 	return parsed.code == .None && state.last_error == .None
 }
 
+// Fixture_Binding records one existential blank-node assignment while checking
+// an expected RDF graph against the materialized target graph. Expected blank
+// nodes are existential variables: they may match any target RDF term, and
+// multiple expected blank nodes need not map injectively.
+@(private) Fixture_Binding :: struct {
+	expected: term.Term_ID,
+	target:   term.Term_ID,
+}
+
+@(private) bound_fixture_term :: proc(bindings: []Fixture_Binding, expected: term.Term_ID) -> (term.Term_ID, bool) {
+	for binding in bindings {
+		if binding.expected == expected do return binding.target, true
+	}
+	return term.INVALID_TERM_ID, false
+}
+
+// fixture_term_matches binds expected blank nodes as needed. Constants use the
+// target dictionary's RDF-term equality, so parsed fixture scopes never leak
+// into IRI or literal comparisons.
+@(private) fixture_term_matches :: proc(target, expected: ^store.Store, expected_id, candidate_id: term.Term_ID, bindings: ^[dynamic]Fixture_Binding) -> bool {
+	expected_term, expected_found := store.get_term(expected, expected_id)
+	if !expected_found do return false
+	if expected_term.kind != .Blank_Node do return store.id_for_term(target, expected_term) == candidate_id
+	if bound, found := bound_fixture_term(bindings^[:], expected_id); found do return bound == candidate_id
+	_, append_error := append(bindings, Fixture_Binding{expected = expected_id, target = candidate_id})
+	return append_error == nil
+}
+
+@(private) fixture_fact_matches :: proc(target, expected: ^store.Store, expected_fact, candidate: store.Fact, bindings: ^[dynamic]Fixture_Binding) -> bool {
+	start := len(bindings^)
+	if !fixture_term_matches(target, expected, expected_fact.subject, candidate.subject, bindings) {
+		resize(bindings, start)
+		return false
+	}
+	if !fixture_term_matches(target, expected, expected_fact.predicate, candidate.predicate, bindings) {
+		resize(bindings, start)
+		return false
+	}
+	if !fixture_term_matches(target, expected, expected_fact.object, candidate.object, bindings) {
+		resize(bindings, start)
+		return false
+	}
+	return true
+}
+
+// fixture_graph_entails recognizes RDF simple entailment for the expected
+// fixture graph: IRIs and literals are fixed, while blank nodes are
+// existentially mapped into the materialized graph. It deliberately does not
+// require a graph isomorphism or an injective blank-node mapping.
+@(private) fixture_graph_entails :: proc(target, expected: ^store.Store, expected_index: int = 0, bindings: ^[dynamic]Fixture_Binding = nil) -> bool {
+	if expected_index == store.fact_count(expected) do return true
+	_, expected_fact, _, expected_found := store.fact_at(expected, expected_index)
+	if !expected_found do return false
+	for candidate_index in 0..<store.fact_count(target) {
+		_, candidate, _, candidate_found := store.fact_at(target, candidate_index)
+		if !candidate_found do return false
+		start := len(bindings^)
+		if !fixture_fact_matches(target, expected, expected_fact, candidate, bindings) do continue
+		if fixture_graph_entails(target, expected, expected_index + 1, bindings) do return true
+		resize(bindings, start)
+	}
+	return false
+}
+
 @(private) expect_fixture_conclusions :: proc(t: ^testing.T, target, expected: ^store.Store) {
 	testing.expect(t, store.fact_count(expected) > 0)
-	for index in 0..<store.fact_count(expected) {
-		id, _, _, found := store.fact_at(expected, index)
-		testing.expect(t, found)
-		if !found do continue
-		triple, triple_found := store.triple_for(expected, id)
-		testing.expect(t, triple_found)
-		if triple_found do testing.expect(t, has(target, triple))
-	}
+	bindings := make([dynamic]Fixture_Binding)
+	defer delete(bindings)
+	testing.expect(t, fixture_graph_entails(target, expected, 0, &bindings))
+}
+
+@(private) add_fixture_test_triple :: proc(t: ^testing.T, target: ^store.Store, triple: rdf.Triple) {
+	added, error := store.insert_triple(target, triple)
+	testing.expect(t, added)
+	testing.expect_value(t, error, store.Error_Code.None)
+}
+
+@(test)
+test_fixture_graph_entailment_maps_expected_blank_nodes_consistently :: proc(t: ^testing.T) {
+	type := rdf.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
+	complement_of := rdf.iri("http://www.w3.org/2002/07/owl#complementOf")
+	alice, woman := rdf.iri("urn:alice"), rdf.iri("urn:woman")
+
+	expected: store.Store
+	testing.expect_value(t, store.init(&expected), store.Error_Code.None)
+	defer store.destroy(&expected)
+	expected_class := rdf.blank_node("expected-class", rdf.new_blank_node_scope())
+	add_fixture_test_triple(t, &expected, {alice, type, expected_class})
+	add_fixture_test_triple(t, &expected, {expected_class, complement_of, woman})
+
+	target: store.Store
+	testing.expect_value(t, store.init(&target), store.Error_Code.None)
+	defer store.destroy(&target)
+	generated_class := rdf.blank_node("generated-class", rdf.new_blank_node_scope())
+	add_fixture_test_triple(t, &target, {alice, type, generated_class})
+	add_fixture_test_triple(t, &target, {generated_class, complement_of, woman})
+	bindings := make([dynamic]Fixture_Binding)
+	defer delete(bindings)
+	testing.expect(t, fixture_graph_entails(&target, &expected, 0, &bindings))
+
+	unlinked: store.Store
+	testing.expect_value(t, store.init(&unlinked), store.Error_Code.None)
+	defer store.destroy(&unlinked)
+	first := rdf.blank_node("first", rdf.new_blank_node_scope())
+	second := rdf.blank_node("second", rdf.new_blank_node_scope())
+	add_fixture_test_triple(t, &unlinked, {alice, type, first})
+	add_fixture_test_triple(t, &unlinked, {second, complement_of, woman})
+	clear(&bindings)
+	testing.expect(t, !fixture_graph_entails(&unlinked, &expected, 0, &bindings))
 }
 
 @(private) run_closure_fixture :: proc(t: ^testing.T, fixture: Corpus_Case) {
@@ -59,7 +160,15 @@ import store "../store"
 	testing.expect_value(t, store_error, store.Error_Code.None)
 	defer destroy(&profile)
 
-	result := materialize_all(&profile, &target, {max_list_items = 8, max_path_states = 8})
+	// Corpus fixtures are intentionally tiny. Keep a finite closure budget here
+	// so a regression in rule interaction fails deterministically instead of
+	// leaving an unbounded test executable consuming the developer's machine.
+	result := materialize_all(&profile, &target, {
+		max_rounds = 64,
+		max_derivations = 10_000,
+		max_list_items = 8,
+		max_path_states = 8,
+	})
 	testing.expect_value(t, result.error, Materialize_All_Error_Code.None)
 	if result.error != .None do return
 	testing.expect_value(t, closure_derivation_count(&profile), result.inferred_facts)
@@ -147,7 +256,7 @@ import store "../store"
 
 @(test)
 test_fixture_corpus_materializes_supported_rule_clusters :: proc(t: ^testing.T) {
-	fixtures := [25]Corpus_Case{
+	fixtures := [30]Corpus_Case{
 		{input_path = "reasoner/owlrl/testdata/01-schema-identity.input.nt", expected_path = "reasoner/owlrl/testdata/01-schema-identity.expected.nt"},
 		{input_path = "reasoner/owlrl/testdata/02-property-relations.input.nt", expected_path = "reasoner/owlrl/testdata/02-property-relations.expected.nt"},
 		{input_path = "reasoner/owlrl/testdata/03-restrictions-self.input.nt", expected_path = "reasoner/owlrl/testdata/03-restrictions-self.expected.nt"},
@@ -173,6 +282,11 @@ test_fixture_corpus_materializes_supported_rule_clusters :: proc(t: ^testing.T) 
 		{input_path = "reasoner/owlrl/testdata/w3c-disjoint-object-properties-002.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-disjoint-object-properties-002.expected.nt"},
 		{input_path = "reasoner/owlrl/testdata/w3c-functional-property-different-from.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-functional-property-different-from.expected.nt"},
 		{input_path = "reasoner/owlrl/testdata/w3c-inverse-functional-property-different-from.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-inverse-functional-property-different-from.expected.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-disjoint-classes-001.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-disjoint-classes-001.expected.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-disjoint-classes-003.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-disjoint-classes-003.expected.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-object-qcr-002.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-object-qcr-002.expected.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-i5-26-010.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-i5-26-010.expected.nt"},
+		{input_path = "reasoner/owlrl/testdata/w3c-i5-5-005.input.nt", expected_path = "reasoner/owlrl/testdata/w3c-i5-5-005.expected.nt"},
 	}
 	for fixture in fixtures do run_closure_fixture(t, fixture)
 }

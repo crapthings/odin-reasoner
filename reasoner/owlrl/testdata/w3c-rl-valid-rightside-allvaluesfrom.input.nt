@@ -1,0 +1,3 @@
+<http://owl2.test/rules#C> <http://www.w3.org/2000/01/rdf-schema#subClassOf> _:restriction .
+_:restriction <http://www.w3.org/2002/07/owl#onProperty> <http://owl2.test/rules#op> .
+_:restriction <http://www.w3.org/2002/07/owl#allValuesFrom> <http://owl2.test/rules#C1> .

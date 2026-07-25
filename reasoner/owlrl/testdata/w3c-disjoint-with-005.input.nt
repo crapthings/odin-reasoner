@@ -1,0 +1,5 @@
+_:a <http://www.w3.org/2002/07/owl#disjointWith> _:d .
+_:a <http://www.w3.org/2002/07/owl#disjointWith> _:e .
+_:b <http://www.w3.org/2002/07/owl#disjointWith> _:c .
+_:d <http://www.w3.org/2002/07/owl#disjointWith> _:e .
+_:e <http://www.w3.org/2002/07/owl#disjointWith> _:d .

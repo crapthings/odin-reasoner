@@ -133,3 +133,35 @@ test_clone_and_commit_inferred_preserve_ids_and_origins :: proc(t: ^testing.T) {
 	testing.expect(t, found)
 	testing.expect_value(t, origin, Origin.Inferred)
 }
+
+@(test)
+test_commit_inferred_admits_fresh_terms_without_changing_existing_ids :: proc(t: ^testing.T) {
+	target: Store
+	testing.expect_value(t, init(&target), Error_Code.None)
+	defer destroy(&target)
+	asserted := rdf.Triple{rdf.iri("urn:a"), rdf.iri("urn:p"), rdf.iri("urn:o")}
+	_, asserted_error := insert_triple(&target, asserted)
+	testing.expect_value(t, asserted_error, Error_Code.None)
+	asserted_subject := term.id_for(&target.dictionary, asserted.subject)
+
+	work: Store
+	testing.expect_value(t, clone(&target, &work), Error_Code.None)
+	defer destroy(&work)
+	fresh := rdf.blank_node("generated", rdf.new_blank_node_scope())
+	inferred := rdf.Triple{rdf.iri("urn:a"), rdf.iri("urn:derived"), fresh}
+	added, inferred_error := insert_triple(&work, inferred, .Inferred)
+	testing.expect(t, added)
+	testing.expect_value(t, inferred_error, Error_Code.None)
+
+	committed, commit_error := commit_inferred(&work, &target)
+	testing.expect_value(t, commit_error, Error_Code.None)
+	testing.expect_value(t, committed, 1)
+	testing.expect_value(t, term.id_for(&target.dictionary, asserted.subject), asserted_subject)
+	testing.expect(t, term.id_for(&target.dictionary, fresh) != term.INVALID_TERM_ID)
+	inferred_fact := Fact{
+		subject = term.id_for(&target.dictionary, inferred.subject),
+		predicate = term.id_for(&target.dictionary, inferred.predicate),
+		object = term.id_for(&target.dictionary, inferred.object),
+	}
+	testing.expect(t, contains(&target, inferred_fact))
+}

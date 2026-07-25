@@ -1,0 +1,7 @@
+<http://example.org/A> <http://www.w3.org/2002/07/owl#disjointWith> _:d .
+<http://example.org/A> <http://www.w3.org/2002/07/owl#disjointWith> _:e .
+_:b <http://www.w3.org/2002/07/owl#disjointWith> _:c .
+_:b <http://www.w3.org/2002/07/owl#disjointWith> <http://example.org/A> .
+_:c <http://www.w3.org/2002/07/owl#disjointWith> <http://example.org/A> .
+_:d <http://www.w3.org/2002/07/owl#disjointWith> _:e .
+_:e <http://www.w3.org/2002/07/owl#disjointWith> _:d .

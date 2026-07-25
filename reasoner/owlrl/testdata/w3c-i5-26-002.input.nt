@@ -1,0 +1,5 @@
+_:b <http://www.w3.org/2002/07/owl#intersectionOf> _:head .
+_:head <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://example.org/B> .
+_:head <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+_:b <http://www.w3.org/2002/07/owl#equivalentClass> <http://example.org/A> .
+_:instance <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> _:b .

@@ -49,6 +49,7 @@ flowchart LR
 | Static OWL profile | 53 direct OWL 2 RL directions, represented by 92 static hierarchy, property, schema, value, equality, functional-property, self-restriction, cardinality, annotation-property, and datatype rules | A documented seed, not complete OWL 2 RL |
 | RDF-list materializers | `owl:oneOf`, `owl:intersectionOf`, `owl:unionOf`, `owl:hasKey`, and multi-property `owl:propertyChainAxiom` | Explicit list and path-frontier limits |
 | Consistency analysis | Evidence-carrying reports for implemented false rules | Reports inconsistency; does not discard a successful closure |
+| RDF input adapters | Borrowed triple sinks, a default-graph RDF/XML quad sink, callback-driven RDF/XML import closure, and a bounded Functional Syntax mapper for `SameIndividual` / `DifferentIndividuals` | No named-graph flattening; transport, most Functional Syntax constructs, and complete annotation/document semantics remain application-owned |
 | SPARQL integration | Optional copied or Store-adopting immutable default-graph Snapshot, plus borrowed indexed live View | No core dependency on `odin-sparql`; named graphs remain unsupported |
 
 See the [RDFS conformance ledger](reasoner/rdfs/conformance-ledger.md) and the
@@ -96,16 +97,19 @@ odin run examples/rdfs_materialize \
   -- example.ttl
 ```
 
-Check and test the core:
+Check the core and run every core package's tests:
 
 ```sh
 odin check reasoner -no-entry-point -collection:odin-rdf=../odin-rdf
-odin test reasoner -collection:odin-rdf=../odin-rdf
+for odin_package in reasoner/term reasoner/store reasoner/import reasoner/functional reasoner/rule reasoner/rdfs reasoner/owlrl reasoner; do
+  odin test "$odin_package" -collection:odin-rdf=../odin-rdf || exit 1
+done
 
-# Optional SPARQL snapshot integration (requires ../odin-sparql as well)
+# Optional SPARQL snapshot integration (requires adjacent odin-sparql and odin-graph)
 odin test adapter/sparql \
   -collection:odin-rdf=../odin-rdf \
-  -collection:odin-sparql=../odin-sparql
+  -collection:odin-sparql=../odin-sparql \
+  -collection:odin-graph=../odin-graph
 ```
 
 The example prints asserted facts, inferred facts, and one provenance record.
@@ -115,7 +119,8 @@ The example prints asserted facts, inferred facts, and one provenance record.
 ```text
 reasoner/term       owned RDF-term dictionary and identity
 reasoner/store      set-semantics triples and indexed matching
-reasoner/import     parser sink that interns borrowed callback values
+reasoner/import     triple/default-graph RDF/XML sinks and callback-driven import closure
+reasoner/functional limited OWL Functional Syntax → RDF mapping input adapter
 reasoner/rule       bounded semi-naive rule engine and provenance
 reasoner/rdfs       six-rule RDFS Core profile and conformance ledger
 reasoner/owlrl      bounded OWL 2 RL seed, list rules, and consistency reports

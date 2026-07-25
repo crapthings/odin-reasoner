@@ -1,0 +1,6 @@
+_:class <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://owl2.test/rules#Cb> .
+_:class <http://www.w3.org/2002/07/owl#oneOf> _:head .
+_:head <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://owl2.test/rules#X> .
+_:head <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:tail .
+_:tail <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://owl2.test/rules#Y> .
+_:tail <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .

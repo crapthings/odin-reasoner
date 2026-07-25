@@ -32,10 +32,19 @@ source handle, and serves the same default-graph indexed scans through
 cannot mutate it through this adapter. It still does not add named-graph
 support or change the adapter's error surface.
 
-Build with both adjacent named collections:
+The integration suite also materializes an OWL 2 RL `owl:inverseOf` conclusion,
+queries it through the borrowed `indexed_view`, then adopts the same completed
+Store and verifies the immutable Snapshot returns the same SPARQL result.
+It separately runs W3C `WebOnt-imports-011` end to end: local RDF/XML import
+resolution, OWL RL materialization, Store adoption, and an `ASK` of the imported
+class entailment.
+
+Build with the adjacent named collections (the `odin-graph` collection is a
+transitive dependency of `odin-sparql`):
 
 ```sh
 odin test adapter/sparql \
   -collection:odin-rdf=../odin-rdf \
-  -collection:odin-sparql=../odin-sparql
+  -collection:odin-sparql=../odin-sparql \
+  -collection:odin-graph=../odin-graph
 ```
