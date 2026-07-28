@@ -6,6 +6,15 @@
 [![Conformance](https://img.shields.io/badge/conformance-53%20directions%20mapped-7b8550)](reasoner/owlrl/conformance-ledger.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-a3b43c.svg)](LICENSE)
 
+> **Status:** development baseline; no public release boundary has been
+> declared.
+>
+> **Role:** bounded, forward-chaining RDFS Core and OWL 2 RL reasoning over
+> application-owned RDF facts.
+>
+> **Not:** a persistent Store, network service, or claim of complete RDFS/OWL
+> conformance.
+
 A bounded, forward-chaining RDF reasoner for Odin. It builds on
 [odin-rdf](https://github.com/crapthings/odin-rdf)'s public RDF model, provides
 a deliberately small RDFS Core profile, and adds an explicitly documented
@@ -20,7 +29,11 @@ integration are being strengthened before any release boundary is declared.
 application-owned facts—not a hidden triple store, network client, or a claim
 of complete RDFS or OWL conformance.
 
-## Part of the Odin RDF ecosystem
+**Start here:** [quick start](#quick-start) ·
+[architecture](docs/architecture.md) · [RDFS profile](reasoner/rdfs/profile.md) ·
+[documentation](#documentation)
+
+## How it fits
 
 ```mermaid
 flowchart LR
@@ -41,7 +54,7 @@ flowchart LR
   the optional read-only snapshot adapter in [`adapter/sparql`](adapter/sparql).
   The core never imports it.
 
-## Status and scope
+## Status
 
 | Surface | Included | Boundary |
 | --- | --- | --- |
