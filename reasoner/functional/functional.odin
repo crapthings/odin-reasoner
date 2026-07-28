@@ -6,6 +6,7 @@ package functional
 import "core:strings"
 import "core:strconv"
 import rdf "odin-rdf:rdf"
+import rdf_vocab "odin-rdf:rdf/vocab"
 
 Error_Code :: enum {
 	None,
@@ -152,17 +153,17 @@ Sink :: proc(triple: rdf.Triple, user_data: rawptr) -> bool
 	all_different := fresh_blank(state)
 	members_head := fresh_blank(state)
 	if all_different.kind != .Blank_Node || members_head.kind != .Blank_Node do return .Out_Of_Memory
-	if error := emit(state, {all_different, rdf.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"), rdf.iri("http://www.w3.org/2002/07/owl#AllDifferent")}); error != .None do return error
+	if error := emit(state, {all_different, rdf.iri(rdf_vocab.RDF_TYPE), rdf.iri("http://www.w3.org/2002/07/owl#AllDifferent")}); error != .None do return error
 	if error := emit(state, {all_different, rdf.iri("http://www.w3.org/2002/07/owl#members"), members_head}); error != .None do return error
 	current := members_head
 	for index in 0..<len(values) {
-		if error := emit(state, {current, rdf.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#first"), values[index]}); error != .None do return error
-		next := rdf.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#nil")
+		if error := emit(state, {current, rdf.iri(rdf_vocab.RDF_FIRST), values[index]}); error != .None do return error
+		next := rdf.iri(rdf_vocab.RDF_NIL)
 		if index + 1 < len(values) {
 			next = fresh_blank(state)
 			if next.kind != .Blank_Node do return .Out_Of_Memory
 		}
-		if error := emit(state, {current, rdf.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#rest"), next}); error != .None do return error
+		if error := emit(state, {current, rdf.iri(rdf_vocab.RDF_REST), next}); error != .None do return error
 		current = next
 	}
 	return .None
@@ -184,7 +185,7 @@ parse :: proc(input: string, sink: Sink, user_data: rawptr = nil) -> Result {
 		if word != "Ontology" || !consume(&state, '(') do return {.Invalid_Syntax}
 		ontology := fresh_blank(&state)
 		if ontology.kind != .Blank_Node do return {.Out_Of_Memory}
-		if error := emit(&state, {ontology, rdf.iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"), rdf.iri("http://www.w3.org/2002/07/owl#Ontology")}); error != .None do return {error}
+		if error := emit(&state, {ontology, rdf.iri(rdf_vocab.RDF_TYPE), rdf.iri("http://www.w3.org/2002/07/owl#Ontology")}); error != .None do return {error}
 		break
 	}
 	for {

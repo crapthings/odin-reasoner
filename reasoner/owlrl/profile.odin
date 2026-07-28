@@ -3,6 +3,7 @@
 package owlrl
 
 import rdf "odin-rdf:rdf"
+import rdf_vocab "odin-rdf:rdf/vocab"
 import rdfs "../rdfs"
 import rule "../rule"
 import store "../store"
@@ -154,16 +155,16 @@ OWL_VERSION_INFO          :: "http://www.w3.org/2002/07/owl#versionInfo"
 OWL_PRIOR_VERSION         :: "http://www.w3.org/2002/07/owl#priorVersion"
 OWL_BACKWARD_COMPATIBLE_WITH :: "http://www.w3.org/2002/07/owl#backwardCompatibleWith"
 OWL_INCOMPATIBLE_WITH     :: "http://www.w3.org/2002/07/owl#incompatibleWith"
-XSD_BOOLEAN               :: "http://www.w3.org/2001/XMLSchema#boolean"
+XSD_BOOLEAN               :: rdf_vocab.XSD_BOOLEAN
 XSD_NON_NEGATIVE_INTEGER  :: "http://www.w3.org/2001/XMLSchema#nonNegativeInteger"
-RDF_FIRST                 :: "http://www.w3.org/1999/02/22-rdf-syntax-ns#first"
-RDF_REST                  :: "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest"
-RDF_NIL                   :: "http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"
-RDFS_LABEL                :: "http://www.w3.org/2000/01/rdf-schema#label"
-RDFS_COMMENT              :: "http://www.w3.org/2000/01/rdf-schema#comment"
-RDFS_SEE_ALSO             :: "http://www.w3.org/2000/01/rdf-schema#seeAlso"
-RDFS_IS_DEFINED_BY        :: "http://www.w3.org/2000/01/rdf-schema#isDefinedBy"
-RDFS_DATATYPE             :: "http://www.w3.org/2000/01/rdf-schema#Datatype"
+RDF_FIRST                 :: rdf_vocab.RDF_FIRST
+RDF_REST                  :: rdf_vocab.RDF_REST
+RDF_NIL                   :: rdf_vocab.RDF_NIL
+RDFS_LABEL                :: rdf_vocab.RDFS_LABEL
+RDFS_COMMENT              :: rdf_vocab.RDFS_COMMENT
+RDFS_SEE_ALSO             :: rdf_vocab.RDFS_SEE_ALSO
+RDFS_IS_DEFINED_BY        :: rdf_vocab.RDFS_IS_DEFINED_BY
+RDFS_DATATYPE             :: rdf_vocab.RDFS_DATATYPE
 
 Terms :: struct {
 	rdf_type:            term.Term_ID,

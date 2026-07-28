@@ -2,6 +2,7 @@
 package rdfs
 
 import rdf "odin-rdf:rdf"
+import rdf_vocab "odin-rdf:rdf/vocab"
 import rule "../rule"
 import store "../store"
 import term "../term"
@@ -13,11 +14,13 @@ RDFS_SP_TRANS :: rule.Rule_ID(4)
 RDFS_DOMAIN   :: rule.Rule_ID(5)
 RDFS_RANGE    :: rule.Rule_ID(6)
 
-RDF_TYPE       :: "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
-RDFS_SUBCLASS  :: "http://www.w3.org/2000/01/rdf-schema#subClassOf"
-RDFS_SUBPROPERTY :: "http://www.w3.org/2000/01/rdf-schema#subPropertyOf"
-RDFS_DOMAIN_IRI :: "http://www.w3.org/2000/01/rdf-schema#domain"
-RDFS_RANGE_IRI  :: "http://www.w3.org/2000/01/rdf-schema#range"
+// Profile-local names remain source-compatible aliases; odin-rdf owns the
+// canonical RDF/RDFS IRI inventory.
+RDF_TYPE          :: rdf_vocab.RDF_TYPE
+RDFS_SUBCLASS     :: rdf_vocab.RDFS_SUB_CLASS_OF
+RDFS_SUBPROPERTY  :: rdf_vocab.RDFS_SUB_PROPERTY_OF
+RDFS_DOMAIN_IRI   :: rdf_vocab.RDFS_DOMAIN
+RDFS_RANGE_IRI    :: rdf_vocab.RDFS_RANGE
 
 Terms :: struct {
 	rdf_type:        term.Term_ID,
